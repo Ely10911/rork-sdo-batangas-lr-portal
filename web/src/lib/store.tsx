@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
   ADMIN_CREDENTIALS,
@@ -8,6 +8,30 @@ import {
   buildResources,
   buildUsers,
 } from "./seed";
+import {
+  deleteCloudCollection,
+  deleteCloudResource,
+  fetchCloudBookmarks,
+  fetchCloudCollections,
+  fetchCloudDownloadEvents,
+  fetchCloudFeedback,
+  fetchCloudNotifications,
+  fetchCloudResources,
+  fetchCloudUsers,
+  incrementCloudDownloads,
+  incrementCloudViews,
+  insertCloudDownloadEvent,
+  insertCloudFeedback,
+  isSupabaseConfigured,
+  markCloudNotificationRead,
+  removeResourceFolder,
+  seedCloudIfEmpty,
+  toggleCloudBookmark,
+  upsertCloudCollection,
+  upsertCloudNotification,
+  upsertCloudResource,
+  upsertCloudUser,
+} from "./cloud";
 import type {
   AppNotification,
   Collection,
@@ -22,6 +46,7 @@ import type {
 } from "./types";
 
 const STORAGE_KEY = "sdo-batangas-lrms:v1";
+const VIEWER_ID = "public";
 
 interface PersistedShape {
   resources: LearningResource[];
@@ -37,6 +62,8 @@ interface PersistedShape {
 
 interface LrmsValue extends PersistedShape {
   downloadEvents: DownloadEvent[];
+  cloudReady: boolean;
+  cloudSyncing: boolean;
   login: (username: string, password: string) => boolean;
   continueAsViewer: () => void;
   logout: () => void;
@@ -89,8 +116,12 @@ function loadState(): PersistedShape {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return base;
     const parsed = JSON.parse(raw) as Partial<PersistedShape>;
+    const resources = (parsed.resources ?? []).map((r) => ({
+      ...r,
+      storagePath: r.storagePath ?? null,
+    }));
     return {
-      resources: parsed.resources?.length ? parsed.resources : base.resources,
+      resources: resources.length ? resources : base.resources,
       feedback: parsed.feedback ?? base.feedback,
       bookmarks: parsed.bookmarks ?? base.bookmarks,
       collections: parsed.collections ?? base.collections,
@@ -108,14 +139,64 @@ function loadState(): PersistedShape {
 
 export function LrmsProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedShape>(() => loadState());
+  const [cloudReady, setCloudReady] = useState<boolean>(false);
+  const [cloudSyncing, setCloudSyncing] = useState<boolean>(false);
+  const hydrated = useRef<boolean>(false);
 
+  // Persist to localStorage on every change (acts as an offline cache + fallback).
   useEffect(() => {
+    if (!hydrated.current) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
       console.warn("LRMS: state could not be persisted.", error);
     }
   }, [state]);
+
+  // Hydrate from the cloud on mount. The cloud is the source of truth; the
+  // local cache is shown first so the UI renders instantly, then cloud data
+  // replaces it once loaded. If Supabase isn't configured we stay local-only.
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      hydrated.current = true;
+      setCloudReady(true);
+      return;
+    }
+    let cancelled = false;
+    setCloudSyncing(true);
+    (async () => {
+      const seeded = defaultState().resources;
+      await seedCloudIfEmpty(seeded);
+      const [resources, feedback, bookmarks, collections, notifications, users, extraDownloads] = await Promise.all([
+        fetchCloudResources(),
+        fetchCloudFeedback(),
+        fetchCloudBookmarks(),
+        fetchCloudCollections(),
+        fetchCloudNotifications(),
+        fetchCloudUsers(),
+        fetchCloudDownloadEvents(),
+      ]);
+      if (cancelled) return;
+      setState((prev) => ({
+        ...prev,
+        resources: resources.length ? resources : prev.resources,
+        feedback: feedback.length ? feedback : prev.feedback,
+        bookmarks: bookmarks.length ? bookmarks : prev.bookmarks,
+        collections: collections.length ? collections : prev.collections,
+        notifications: notifications.length ? notifications : prev.notifications,
+        users: users.length ? users : prev.users,
+        extraDownloads,
+        history: prev.history,
+        session: prev.session,
+      }));
+      hydrated.current = true;
+      setCloudSyncing(false);
+      setCloudReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const seededDownloads = useMemo<DownloadEvent[]>(() => buildDownloadEvents(buildResources()), []);
 
@@ -156,6 +237,8 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
           read: false,
           resourceId: r.id,
         }));
+      records.forEach((record) => void upsertCloudResource(record));
+      notifications.forEach((note) => void upsertCloudNotification(note));
       return {
         ...prev,
         resources: [...records, ...prev.resources],
@@ -165,19 +248,25 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateResource = useCallback((id: string, patch: Partial<LearningResource>) => {
-    setState((prev) => ({
-      ...prev,
-      resources: prev.resources.map((r) => (r.id === id ? { ...r, ...patch } : r)),
-    }));
+    setState((prev) => {
+      const next = prev.resources.map((r) => (r.id === id ? { ...r, ...patch } : r));
+      const updated = next.find((r) => r.id === id);
+      if (updated) void upsertCloudResource(updated);
+      return { ...prev, resources: next };
+    });
   }, []);
 
   const deleteResource = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      resources: prev.resources.filter((r) => r.id !== id),
-      bookmarks: prev.bookmarks.filter((b) => b !== id),
-      collections: prev.collections.map((c) => ({ ...c, resourceIds: c.resourceIds.filter((r) => r !== id) })),
-    }));
+    setState((prev) => {
+      void deleteCloudResource(id);
+      void removeResourceFolder(id);
+      return {
+        ...prev,
+        resources: prev.resources.filter((r) => r.id !== id),
+        bookmarks: prev.bookmarks.filter((b) => b !== id),
+        collections: prev.collections.map((c) => ({ ...c, resourceIds: c.resourceIds.filter((r) => r !== id) })),
+      };
+    });
   }, []);
 
   const setResourceStatus = useCallback((id: string, status: ResourceStatus) => {
@@ -199,20 +288,19 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
               ...prev.notifications,
             ]
           : prev.notifications;
-      return {
-        ...prev,
-        resources: prev.resources.map((r) =>
-          r.id === id ? { ...r, status, dateUploaded: status === "published" ? new Date().toISOString() : r.dateUploaded } : r,
-        ),
-        notifications,
-      };
+      const next = prev.resources.map((r) =>
+        r.id === id ? { ...r, status, dateUploaded: status === "published" ? new Date().toISOString() : r.dateUploaded } : r,
+      );
+      const updated = next.find((r) => r.id === id);
+      if (updated) void upsertCloudResource(updated);
+      if (shouldNotify && target) notifications.forEach((note) => void upsertCloudNotification(note));
+      return { ...prev, resources: next, notifications };
     });
   }, []);
 
   const addVersion = useCallback((id: string, version: ResourceVersion) => {
-    setState((prev) => ({
-      ...prev,
-      resources: prev.resources.map((r) =>
+    setState((prev) => {
+      const next = prev.resources.map((r) =>
         r.id === id
           ? {
               ...r,
@@ -223,8 +311,11 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
               dateUploaded: version.uploadedAt,
             }
           : r,
-      ),
-    }));
+      );
+      const updated = next.find((r) => r.id === id);
+      if (updated) void upsertCloudResource(updated);
+      return { ...prev, resources: next };
+    });
   }, []);
 
   const registerDownload = useCallback((id: string) => {
@@ -232,81 +323,87 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       const target = prev.resources.find((r) => r.id === id);
       if (!target) return prev;
       const at = new Date().toISOString();
+      const event: DownloadEvent = {
+        id: `${id}-live-${Date.now()}`,
+        resourceId: id,
+        at,
+        subOffice: target.subOffice,
+        school: target.school,
+      };
+      void incrementCloudDownloads(id);
+      void insertCloudDownloadEvent(event);
       return {
         ...prev,
         resources: prev.resources.map((r) => (r.id === id ? { ...r, downloads: r.downloads + 1 } : r)),
         history: [{ resourceId: id, at }, ...prev.history.filter((h) => h.resourceId !== id)].slice(0, 40),
-        extraDownloads: [
-          ...prev.extraDownloads,
-          { id: `${id}-live-${Date.now()}`, resourceId: id, at, subOffice: target.subOffice, school: target.school },
-        ],
+        extraDownloads: [...prev.extraDownloads, event],
       };
     });
   }, []);
 
   const registerView = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      resources: prev.resources.map((r) => (r.id === id ? { ...r, views: r.views + 1 } : r)),
-    }));
+    setState((prev) => {
+      void incrementCloudViews(id);
+      return {
+        ...prev,
+        resources: prev.resources.map((r) => (r.id === id ? { ...r, views: r.views + 1 } : r)),
+      };
+    });
   }, []);
 
   const toggleBookmark = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      bookmarks: prev.bookmarks.includes(id) ? prev.bookmarks.filter((b) => b !== id) : [id, ...prev.bookmarks],
-    }));
+    setState((prev) => {
+      const exists = prev.bookmarks.includes(id);
+      void toggleCloudBookmark(id, !exists);
+      return {
+        ...prev,
+        bookmarks: exists ? prev.bookmarks.filter((b) => b !== id) : [id, ...prev.bookmarks],
+      };
+    });
   }, []);
 
   const createCollection = useCallback((name: string, description: string): string => {
     const id = `COL-${Date.now().toString().slice(-6)}`;
-    setState((prev) => ({
-      ...prev,
-      collections: [
-        ...prev.collections,
-        { id, name, description, resourceIds: [], createdAt: new Date().toISOString() },
-      ],
-    }));
+    const collection: Collection = { id, name, description, resourceIds: [], createdAt: new Date().toISOString() };
+    setState((prev) => ({ ...prev, collections: [...prev.collections, collection] }));
+    void upsertCloudCollection(collection);
     return id;
   }, []);
 
   const deleteCollection = useCallback((id: string) => {
     setState((prev) => ({ ...prev, collections: prev.collections.filter((c) => c.id !== id) }));
+    void deleteCloudCollection(id);
   }, []);
 
   const toggleInCollection = useCallback((collectionId: string, resourceId: string) => {
-    setState((prev) => ({
-      ...prev,
-      collections: prev.collections.map((c) =>
-        c.id === collectionId
-          ? {
-              ...c,
-              resourceIds: c.resourceIds.includes(resourceId)
-                ? c.resourceIds.filter((r) => r !== resourceId)
-                : [...c.resourceIds, resourceId],
-            }
-          : c,
-      ),
-    }));
+    setState((prev) => {
+      const next = prev.collections.map((c) => {
+        if (c.id !== collectionId) return c;
+        const inside = c.resourceIds.includes(resourceId);
+        return {
+          ...c,
+          resourceIds: inside ? c.resourceIds.filter((r) => r !== resourceId) : [...c.resourceIds, resourceId],
+        };
+      });
+      const updated = next.find((c) => c.id === collectionId);
+      if (updated) void upsertCloudCollection(updated);
+      return { ...prev, collections: next };
+    });
   }, []);
 
   const addFeedback = useCallback(
     (resourceId: string, author: string, stars: number, comment: string, kind: FeedbackKind) => {
-      setState((prev) => ({
-        ...prev,
-        feedback: [
-          {
-            id: `${resourceId}-fb-${Date.now()}`,
-            resourceId,
-            author,
-            stars,
-            comment,
-            kind,
-            createdAt: new Date().toISOString(),
-          },
-          ...prev.feedback,
-        ],
-      }));
+      const feedback: Feedback = {
+        id: `${resourceId}-fb-${Date.now()}`,
+        resourceId,
+        author,
+        stars,
+        comment,
+        kind,
+        createdAt: new Date().toISOString(),
+      };
+      setState((prev) => ({ ...prev, feedback: [feedback, ...prev.feedback] }));
+      void insertCloudFeedback(feedback);
     },
     [],
   );
@@ -316,23 +413,31 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       ...prev,
       notifications: prev.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
     }));
+    void markCloudNotificationRead(id, true);
   }, []);
 
   const markAllNotificationsRead = useCallback(() => {
-    setState((prev) => ({ ...prev, notifications: prev.notifications.map((n) => ({ ...n, read: true })) }));
+    setState((prev) => {
+      prev.notifications.forEach((n) => void markCloudNotificationRead(n.id, true));
+      return { ...prev, notifications: prev.notifications.map((n) => ({ ...n, read: true })) };
+    });
   }, []);
 
   const toggleUserActive = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      users: prev.users.map((u) => (u.id === id ? { ...u, active: !u.active } : u)),
-    }));
+    setState((prev) => {
+      const next = prev.users.map((u) => (u.id === id ? { ...u, active: !u.active } : u));
+      const updated = next.find((u) => u.id === id);
+      if (updated) void upsertCloudUser(updated);
+      return { ...prev, users: next };
+    });
   }, []);
 
   const value = useMemo<LrmsValue>(
     () => ({
       ...state,
       downloadEvents,
+      cloudReady,
+      cloudSyncing,
       login,
       continueAsViewer,
       logout,
@@ -355,6 +460,8 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
     [
       state,
       downloadEvents,
+      cloudReady,
+      cloudSyncing,
       login,
       continueAsViewer,
       logout,

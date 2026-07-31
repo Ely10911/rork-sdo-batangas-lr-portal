@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Eyebrow } from "@/components/atoms";
+import { resolvePublicUrl } from "@/lib/cloud";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/format";
 import { FILE_KIND_LABEL } from "@/lib/taxonomy";
@@ -97,6 +98,34 @@ function DocumentSurface({ resource }: Props) {
   const [page, setPage] = useState<number>(0);
   const [zoom, setZoom] = useState<number>(1);
   const current = outline[page];
+  const publicUrl = useMemo(() => resolvePublicUrl(resource.storagePath), [resource.storagePath]);
+
+  // Render the real PDF in-browser when the file is in cloud storage.
+  if (publicUrl && resource.fileKind === "pdf") {
+    return (
+      <div className="flex flex-col">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/50 px-4 py-2.5">
+          <Eyebrow className="text-ink-soft">{FILE_KIND_LABEL[resource.fileKind]} viewer</Eyebrow>
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring rounded-sm border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-ink-soft hover:border-gold/60"
+          >
+            Open in new tab
+          </a>
+        </div>
+        <div className="flex max-h-[600px] justify-center overflow-auto bg-ink/5 p-5">
+          <iframe
+            key={publicUrl}
+            src={`${publicUrl}#view=FitH&toolbar=1`}
+            title={`Preview of ${resource.title}`}
+            className="h-[600px] w-full max-w-[820px] rounded-sm border border-border bg-white shadow-lift"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">
@@ -318,11 +347,43 @@ function VideoSurface({ resource }: Props) {
   const duration = resource.durationSec || 480;
   const { playing, position, toggle, reset, seek } = useSimulatedPlayback(duration);
   const progress = (position / duration) * 100;
+  const publicUrl = useMemo(() => resolvePublicUrl(resource.storagePath), [resource.storagePath]);
 
   const chapters = useMemo(
     () => buildOutline(resource).slice(0, 5).map((s, i) => ({ label: s.heading, at: (duration / 5) * i })),
     [resource, duration],
   );
+
+  // When the real file is available in cloud storage, render an actual <video>
+  // player instead of the simulated preview.
+  if (publicUrl) {
+    return (
+      <div>
+        <div className="relative aspect-video w-full overflow-hidden bg-ink-deep">
+          <video
+            key={publicUrl}
+            src={publicUrl}
+            controls
+            className="h-full w-full"
+            poster={undefined}
+            aria-label={`Preview of ${resource.title}`}
+          />
+        </div>
+        <div className="space-y-3 border-t border-border bg-muted/40 px-4 py-3">
+          <div className="flex flex-wrap gap-2">
+            {chapters.map((chapter) => (
+              <span
+                key={chapter.label}
+                className="rounded-sm border border-border bg-card px-2 py-1 text-[11px] text-ink-soft"
+              >
+                {formatDuration(chapter.at)} · {chapter.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -413,6 +474,29 @@ function AudioSurface({ resource }: Props) {
     [],
   );
   const progressIndex = Math.floor((position / duration) * bars.length);
+  const publicUrl = useMemo(() => resolvePublicUrl(resource.storagePath), [resource.storagePath]);
+
+  // When the real audio file is in cloud storage, render an actual <audio> player.
+  if (publicUrl) {
+    return (
+      <div className="p-5">
+        <div className="plate overflow-hidden">
+          <div className="flex items-center gap-4 border-b border-border bg-muted/40 px-4 py-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-ink text-parchment">
+              <Play className="ml-0.5 h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-display text-sm font-semibold text-ink">{resource.title}</p>
+              <p className="tabular text-[11px] text-muted-foreground">{resource.language}</p>
+            </div>
+          </div>
+          <div className="px-4 py-4">
+            <audio key={publicUrl} src={publicUrl} controls className="w-full" aria-label={`Preview of ${resource.title}`} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-5">
@@ -455,6 +539,7 @@ function AudioSurface({ resource }: Props) {
 
 function ImageSurface({ resource }: Props) {
   const [zoom, setZoom] = useState<number>(1);
+  const publicUrl = useMemo(() => resolvePublicUrl(resource.storagePath), [resource.storagePath]);
   return (
     <div>
       <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-2.5">
@@ -479,23 +564,32 @@ function ImageSurface({ resource }: Props) {
         </div>
       </div>
       <div className="flex max-h-[520px] items-center justify-center overflow-auto bg-ink/5 p-6">
-        <div
-          style={{ transform: `scale(${zoom})` }}
-          className="w-full max-w-[460px] origin-center rounded-sm border border-border bg-[hsl(45_45%_98%)] p-7 shadow-lift transition-transform"
-        >
-          <div className="rule-gold mb-4 w-full" />
-          <p className="eyebrow text-gold-deep">{resource.learningArea}</p>
-          <h4 className="mt-2 font-display text-2xl font-bold uppercase leading-tight text-ink">{resource.title}</h4>
-          <p className="mt-3 text-[12px] leading-relaxed text-ink-soft">{resource.learningCompetency}</p>
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="hatch aspect-square rounded-sm border border-gold/40 bg-gold/5" />
-            ))}
+        {publicUrl ? (
+          <img
+            src={publicUrl}
+            alt={resource.title}
+            style={{ transform: `scale(${zoom})` }}
+            className="max-h-[480px] w-auto max-w-full origin-center rounded-sm border border-border shadow-lift transition-transform"
+          />
+        ) : (
+          <div
+            style={{ transform: `scale(${zoom})` }}
+            className="w-full max-w-[460px] origin-center rounded-sm border border-border bg-[hsl(45_45%_98%)] p-7 shadow-lift transition-transform"
+          >
+            <div className="rule-gold mb-4 w-full" />
+            <p className="eyebrow text-gold-deep">{resource.learningArea}</p>
+            <h4 className="mt-2 font-display text-2xl font-bold uppercase leading-tight text-ink">{resource.title}</h4>
+            <p className="mt-3 text-[12px] leading-relaxed text-ink-soft">{resource.learningCompetency}</p>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="hatch aspect-square rounded-sm border border-gold/40 bg-gold/5" />
+              ))}
+            </div>
+            <p className="mt-5 border-t border-dashed border-border pt-3 text-[10px] text-muted-foreground">
+              {resource.division} · {resource.school}
+            </p>
           </div>
-          <p className="mt-5 border-t border-dashed border-border pt-3 text-[10px] text-muted-foreground">
-            {resource.division} · {resource.school}
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );

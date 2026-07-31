@@ -15,6 +15,8 @@ export interface ResourceVersion {
   fileSizeKB: number;
   uploadedAt: string;
   note: string;
+  /** Supabase Storage path for this version's file, when uploaded to the cloud. */
+  storagePath?: string;
 }
 
 export type FeedbackKind = "review" | "issue" | "suggestion";
@@ -65,6 +67,8 @@ export interface LearningResource {
   downloads: number;
   views: number;
   featured: boolean;
+  /** Supabase Storage path (bucket-relative) when the file is persisted in the cloud. */
+  storagePath: string | null;
 }
 
 export interface DownloadEvent {

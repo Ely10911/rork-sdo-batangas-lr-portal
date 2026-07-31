@@ -23,6 +23,7 @@ import {
   keyStageFor,
   subOfficeFor,
 } from "@/lib/taxonomy";
+import { uploadVersionFile } from "@/lib/cloud";
 import { useLrms } from "@/lib/store";
 import type { LearningResource, Quarter, ResourceStatus } from "@/lib/types";
 
@@ -300,17 +301,24 @@ export default function ManageResources() {
       <VersionDialog
         resource={versioning}
         onClose={() => setVersioning(null)}
-        onSave={(note, fileSizeKB, fileName) => {
+        onSave={async (note, fileSizeKB, fileName, replacementFile) => {
           if (!versioning) return;
           const minor = versioning.versions.length;
+          const versionLabel = `v1.${minor}`;
+          let storagePath: string | undefined;
+          if (replacementFile) {
+            const uploaded = await uploadVersionFile(versioning.id, versionLabel, replacementFile);
+            if (uploaded) storagePath = uploaded.path;
+          }
           addVersion(versioning.id, {
-            version: `v1.${minor}`,
+            version: versionLabel,
             fileName,
             fileSizeKB,
             uploadedAt: new Date().toISOString(),
             note,
+            storagePath,
           });
-          toast.success(`Version v1.${minor} uploaded and set as current`);
+          toast.success(`Version ${versionLabel} uploaded and set as current`);
           setVersioning(null);
         }}
       />
@@ -576,10 +584,11 @@ function VersionDialog({
 }: {
   resource: LearningResource | null;
   onClose: () => void;
-  onSave: (note: string, fileSizeKB: number, fileName: string) => void;
+  onSave: (note: string, fileSizeKB: number, fileName: string, file: File | null) => void | Promise<void>;
 }) {
   const [note, setNote] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState<boolean>(false);
 
   if (!resource) return null;
 
@@ -633,16 +642,21 @@ function VersionDialog({
           </button>
           <button
             type="button"
-            onClick={() =>
-              onSave(
-                note.trim() || "Replacement file uploaded by the division administrator.",
-                file ? Math.max(1, Math.round(file.size / 1024)) : resource.fileSizeKB,
-                file?.name ?? resource.fileName,
-              )
-            }
-            className="focus-ring rounded-sm bg-ink px-4 py-2 text-[13px] font-semibold text-parchment"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              Promise.resolve(
+                onSave(
+                  note.trim() || "Replacement file uploaded by the division administrator.",
+                  file ? Math.max(1, Math.round(file.size / 1024)) : resource.fileSizeKB,
+                  file?.name ?? resource.fileName,
+                  file,
+                ),
+              ).finally(() => setBusy(false));
+            }}
+            className="focus-ring rounded-sm bg-ink px-4 py-2 text-[13px] font-semibold text-parchment disabled:opacity-60"
           >
-            Upload new version
+            {busy ? "Uploading…" : "Upload new version"}
           </button>
         </div>
       </DialogContent>

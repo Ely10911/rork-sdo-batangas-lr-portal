@@ -24,6 +24,7 @@ import {
   keyStageFor,
   subOfficeFor,
 } from "@/lib/taxonomy";
+import { uploadResourceFile } from "@/lib/cloud";
 import { useLrms } from "@/lib/store";
 import type { FileKind, LearningResource, Quarter, ResourceStatus } from "@/lib/types";
 
@@ -128,7 +129,10 @@ export default function AdminUpload() {
   const [staged, setStaged] = useState<Staged[]>([]);
   const [dragging, setDragging] = useState<boolean>(false);
   const [open, setOpen] = useState<string>("");
+  const [committing, setCommitting] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Keep the raw File objects alongside staged metadata so we can upload them.
+  const stagedFiles = useRef<Map<string, File>>(new Map());
 
   const drafts = useMemo(
     () => resources.filter((r) => r.status === "draft" || r.status === "pending"),
@@ -167,6 +171,9 @@ export default function AdminUpload() {
       shsStrand: "Not applicable",
       keywords: "",
     }));
+    Array.from(files).forEach((file, i) => {
+      stagedFiles.current.set(additions[i].key, file);
+    });
     setStaged((prev) => [...prev, ...additions]);
     setOpen(additions[0].key);
     toast.success(`${additions.length} file(s) staged for metadata capture`);
@@ -195,7 +202,7 @@ export default function AdminUpload() {
     toast.success("Batch metadata applied to all staged files");
   };
 
-  const commit = (status: ResourceStatus) => {
+  const commit = async (status: ResourceStatus) => {
     if (staged.length === 0) {
       toast.error("Add at least one file before saving.");
       return;
@@ -205,6 +212,7 @@ export default function AdminUpload() {
       toast.error("Each resource needs a title and an author.");
       return;
     }
+    setCommitting(true);
     const now = new Date().toISOString();
     const records: LearningResource[] = staged.map((item, i) => ({
       id: `LR-2026-${(nextIdNumber + i).toString().padStart(4, "0")}`,
@@ -255,16 +263,43 @@ export default function AdminUpload() {
       downloads: 0,
       views: 0,
       featured: false,
+      storagePath: null,
     }));
 
-    addResources(records);
+    // Upload each file to Supabase Storage in parallel, then stamp the
+    // returned storage path onto the matching record before persisting.
+    const uploads = await Promise.all(
+      records.map(async (record) => {
+        const file = stagedFiles.current.get(staged.find((s) => s.fileName === record.fileName)?.key ?? "");
+        if (!file) return null;
+        const uploaded = await uploadResourceFile(record, file);
+        return uploaded;
+      }),
+    );
+    const finalRecords = records.map((record, i) => {
+      const uploaded = uploads[i];
+      if (!uploaded) return record;
+      const versions = record.versions.map((v) => ({ ...v, storagePath: uploaded.path }));
+      return { ...record, storagePath: uploaded.path, versions } as LearningResource;
+    });
+
+    addResources(finalRecords);
+    stagedFiles.current.clear();
     setStaged([]);
+    setCommitting(false);
+    const uploadedCount = uploads.filter(Boolean).length;
     toast.success(
       status === "published"
-        ? `${records.length} resource(s) published to the portal`
+        ? `${finalRecords.length} resource(s) published to the portal`
         : status === "pending"
-          ? `${records.length} resource(s) submitted for quality assurance`
-          : `${records.length} draft(s) saved`,
+          ? `${finalRecords.length} resource(s) submitted for quality assurance`
+          : `${finalRecords.length} draft(s) saved`,
+      {
+        description:
+          uploadedCount > 0
+            ? `${uploadedCount} file(s) persisted to cloud storage and accessible to all devices.`
+            : "Files staged locally — cloud storage unavailable. Metadata was still saved.",
+      },
     );
   };
 
@@ -325,24 +360,27 @@ export default function AdminUpload() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => commit("draft")}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-ink/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink"
+                    onClick={() => void commit("draft")}
+                    disabled={committing}
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-ink/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink disabled:opacity-60"
                   >
-                    <Save className="h-3.5 w-3.5" /> Save as draft
+                    <Save className="h-3.5 w-3.5" /> {committing ? "Saving…" : "Save as draft"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => commit("pending")}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-gold/60 bg-gold/15 px-3 py-1.5 text-[12px] font-medium text-gold-deep"
+                    onClick={() => void commit("pending")}
+                    disabled={committing}
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-gold/60 bg-gold/15 px-3 py-1.5 text-[12px] font-medium text-gold-deep disabled:opacity-60"
                   >
-                    <Send className="h-3.5 w-3.5" /> Submit for QA
+                    <Send className="h-3.5 w-3.5" /> {committing ? "Submitting…" : "Submit for QA"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => commit("published")}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-ink px-3 py-1.5 text-[12px] font-semibold text-parchment"
+                    onClick={() => void commit("published")}
+                    disabled={committing}
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-ink px-3 py-1.5 text-[12px] font-semibold text-parchment disabled:opacity-60"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Publish now
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {committing ? "Publishing…" : "Publish now"}
                   </button>
                 </div>
               </div>
@@ -373,7 +411,10 @@ export default function AdminUpload() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setStaged((prev) => prev.filter((s) => s.key !== item.key))}
+                          onClick={() => {
+                            stagedFiles.current.delete(item.key);
+                            setStaged((prev) => prev.filter((s) => s.key !== item.key));
+                          }}
                           aria-label="Remove staged file"
                           className="focus-ring grid h-7 w-7 place-items-center rounded-sm border border-border bg-card text-muted-foreground hover:border-destructive/60 hover:text-destructive"
                         >

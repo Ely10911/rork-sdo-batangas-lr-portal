@@ -647,6 +647,7 @@ export function buildResources(): LearningResource[] {
       downloads,
       views,
       featured: spec.featured ?? false,
+      storagePath: null,
     };
   });
 }

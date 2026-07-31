@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDuration, formatNumber, formatRelative, formatSize } from "@/lib/format";
 import { FILE_KIND_LABEL } from "@/lib/taxonomy";
+import { resolvePublicUrl } from "@/lib/cloud";
 import { relatedResources } from "@/lib/search";
 import { useLrms, useRating } from "@/lib/store";
 import type { FeedbackKind } from "@/lib/types";
@@ -102,8 +103,29 @@ export default function ResourceDetail() {
   const saved = bookmarks.includes(resource.id);
   const lastDownloaded = history.find((h) => h.resourceId === resource.id);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     registerDownload(resource.id);
+    const publicUrl = resolvePublicUrl(resource.storagePath);
+    // When the file is persisted in Supabase Storage, download the real file;
+    // otherwise fall back to the manifest text so the flow always works.
+    if (publicUrl) {
+      try {
+        const link = document.createElement("a");
+        link.href = publicUrl;
+        link.download = resource.fileName;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Download started", {
+          description: `${resource.fileName} · ${formatSize(resource.fileSizeKB)} · logged to download history.`,
+        });
+        return;
+      } catch (error) {
+        console.warn("LRMS: cloud download failed, falling back to manifest", error);
+      }
+    }
     const manifest = [
       `${resource.division}`,
       `Learning Resource Management System — download manifest`,
@@ -131,7 +153,7 @@ export default function ResourceDetail() {
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 1200);
-    toast.success("Download started", {
+    toast.success("Download manifest saved", {
       description: `${resource.fileName} · ${formatSize(resource.fileSizeKB)} · logged to download history.`,
     });
   };
@@ -234,7 +256,7 @@ export default function ResourceDetail() {
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={handleDownload}
+              onClick={() => void handleDownload()}
               className="focus-ring inline-flex items-center gap-2 rounded-sm bg-ink px-5 py-2.5 text-[13px] font-semibold text-parchment transition-all hover:bg-ink-soft active:scale-[0.98]"
             >
               <Download className="h-4 w-4" strokeWidth={2} /> Download {resource.fileKind.toUpperCase()} ·{" "}
