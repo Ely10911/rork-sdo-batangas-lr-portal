@@ -80,8 +80,8 @@ export default function AdminAnalytics() {
     () =>
       SUB_OFFICE_NAMES.map((office) => ({
         office: office.length > 14 ? `${office.slice(0, 13)}…` : office,
-        downloads: events.filter((e) => e.subOffice === office).length,
-        resources: published.filter((r) => r.subOffice === office).length,
+        downloads: events.filter((e) => e.subOffices.includes(office)).length,
+        resources: published.filter((r) => r.subOffices.includes(office)).length,
       })).filter((row) => row.resources > 0 || row.downloads > 0),
     [events, published],
   );
@@ -89,7 +89,9 @@ export default function AdminAnalytics() {
   const bySchool = useMemo(() => {
     const counts: Record<string, number> = {};
     events.forEach((event) => {
-      counts[event.school] = (counts[event.school] ?? 0) + 1;
+      event.schools.forEach((s) => {
+        counts[s] = (counts[s] ?? 0) + 1;
+      });
     });
     return Object.entries(counts)
       .map(([school, downloads]) => ({ school, downloads }))
@@ -298,7 +300,7 @@ export default function AdminAnalytics() {
           rows={leastAccessed.map((r) => ({
             id: r.id,
             title: r.title,
-            meta: `${r.school} · uploaded ${formatRelative(r.dateUploaded)}`,
+            meta: `${r.schools[0] ?? "—"} · uploaded ${formatRelative(r.dateUploaded)}`,
             value: r.downloads,
           }))}
         />

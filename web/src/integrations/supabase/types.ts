@@ -80,21 +80,27 @@ export type Database = {
           id: string
           resource_id: string
           school: string
+          schools: string[] | null
           sub_office: string
+          sub_offices: string[] | null
         }
         Insert: {
           at?: string
           id: string
           resource_id: string
           school?: string
+          schools?: string[] | null
           sub_office?: string
+          sub_offices?: string[] | null
         }
         Update: {
           at?: string
           id?: string
           resource_id?: string
           school?: string
+          schools?: string[] | null
           sub_office?: string
+          sub_offices?: string[] | null
         }
         Relationships: [
           {
@@ -238,10 +244,12 @@ export type Database = {
           resource_type: string
           school: string
           school_year: string
+          schools: string[] | null
           shs_strand: string | null
           status: string
           storage_path: string | null
           sub_office: string
+          sub_offices: string[] | null
           subject: string
           title: string
           updated_at: string
@@ -279,10 +287,12 @@ export type Database = {
           resource_type: string
           school?: string
           school_year?: string
+          schools?: string[] | null
           shs_strand?: string | null
           status?: string
           storage_path?: string | null
           sub_office?: string
+          sub_offices?: string[] | null
           subject?: string
           title: string
           updated_at?: string
@@ -320,10 +330,12 @@ export type Database = {
           resource_type?: string
           school?: string
           school_year?: string
+          schools?: string[] | null
           shs_strand?: string | null
           status?: string
           storage_path?: string | null
           sub_office?: string
+          sub_offices?: string[] | null
           subject?: string
           title?: string
           updated_at?: string

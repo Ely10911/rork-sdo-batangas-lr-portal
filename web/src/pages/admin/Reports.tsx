@@ -78,14 +78,14 @@ export default function AdminReports() {
     if (key === "by-district") {
       const rows: (string | number)[][] = [];
       SUB_OFFICE_NAMES.forEach((office) => {
-        const items = published.filter((r) => r.subOffice === office);
+        const items = published.filter((r) => r.subOffices.includes(office));
         if (items.length === 0) return;
         rows.push([
           office,
-          subOfficeFor(items[0].school),
+          items[0]?.subOffices[0] ?? office,
           items.length,
           items.reduce((sum, r) => sum + r.downloads, 0),
-          downloadEvents.filter((e) => e.subOffice === office).length,
+          downloadEvents.filter((e) => e.subOffices.includes(office)).length,
         ]);
       });
       return {
@@ -97,13 +97,13 @@ export default function AdminReports() {
     }
 
     if (key === "by-school") {
-      const schools = Array.from(new Set(published.map((r) => r.school)));
+      const schools = Array.from(new Set(published.flatMap((r) => r.schools)));
       return {
         title: "Learning Resources by School",
         subtitle: stamp,
         columns: ["School", "Sub-office", "Published LRs", "Downloads", "Avg. rating"],
         rows: schools.map((school) => {
-          const items = published.filter((r) => r.school === school);
+          const items = published.filter((r) => r.schools.includes(school));
           const rated = items.filter((r) => ratings[r.id]);
           const avg = rated.length
             ? rated.reduce((sum, r) => sum + (ratings[r.id]?.average ?? 0), 0) / rated.length
@@ -111,7 +111,7 @@ export default function AdminReports() {
           return [
             school,
             subOfficeFor(school),
-            items[0]?.subOffice ?? "—",
+            items[0]?.subOffices[0] ?? "—",
             items.length,
             items.reduce((sum, r) => sum + r.downloads, 0),
             avg ? avg.toFixed(2) : "—",

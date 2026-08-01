@@ -15,9 +15,9 @@ import {
   subOfficeFor,
   keyStageFor,
 } from "./taxonomy";
-import { FILE_EXTENSION, slugify } from "./format";
+import { slugify } from "./format";
 
-/** Deterministic PRNG so the seeded catalog and analytics stay stable across reloads. */
+/** Deterministic PRNG so the seeded catalog stays stable across reloads. */
 function mulberry32(seed: number): () => number {
   let a = seed;
   return () => {
@@ -578,29 +578,16 @@ export function buildResources(): LearningResource[] {
     const dateUploaded = iso(uploadedDaysAgo, rand);
     const dateCreated = iso(uploadedDaysAgo + Math.floor(rand() * 60) + 10, rand);
     const isDoc = ["pdf", "docx", "epub"].includes(spec.kind);
-    const fileSizeKB =
-      spec.kind === "video"
-        ? Math.floor(rand() * 140000) + 42000
-        : spec.kind === "audio"
-          ? Math.floor(rand() * 9000) + 3200
-          : spec.kind === "pptx"
-            ? Math.floor(rand() * 12000) + 4200
-            : spec.kind === "image"
-              ? Math.floor(rand() * 3400) + 900
-              : Math.floor(rand() * 5200) + 620;
     const pages = isDoc ? Math.floor(rand() * 26) + 8 : spec.kind === "pptx" ? Math.floor(rand() * 22) + 10 : 0;
     const durationSec = spec.kind === "video" || spec.kind === "audio" ? Math.floor(rand() * 900) + 240 : 0;
     const minorVersions = Math.floor(rand() * 3);
     const version = `v1.${minorVersions}`;
-    const ext = FILE_EXTENSION[spec.kind];
-    const fileName = `${slugify(spec.title)}.${ext}`;
-    const downloads = status === "published" ? Math.floor(rand() * 1450) + (spec.featured ? 620 : 40) : 0;
-    const views = downloads * (2 + Math.floor(rand() * 3)) + Math.floor(rand() * 180);
+    const fileName = `${slugify(spec.title)}.${spec.kind}`;
+    const subOffice = subOfficeFor(spec.school);
 
     const versions = Array.from({ length: minorVersions + 1 }, (_, v) => ({
       version: `v1.${v}`,
       fileName,
-      fileSizeKB: Math.round(fileSizeKB * (0.86 + v * 0.07)),
       uploadedAt: iso(uploadedDaysAgo + (minorVersions - v) * 24, rand),
       note:
         v === 0
@@ -626,13 +613,12 @@ export function buildResources(): LearningResource[] {
       resourceType: spec.type,
       fileKind: spec.kind,
       fileName,
-      fileSizeKB,
       pages,
       durationSec,
       language: spec.language,
       author: spec.author,
-      school: spec.school,
-      subOffice: subOfficeFor(spec.school),
+      schools: [spec.school],
+      subOffices: [subOffice],
       division: DIVISION,
       publisher: `${DIVISION} — Curriculum Implementation Division`,
       copyright: COPYRIGHT_OPTIONS[Math.floor(rand() * COPYRIGHT_OPTIONS.length)],
@@ -643,8 +629,8 @@ export function buildResources(): LearningResource[] {
       status,
       dateCreated,
       dateUploaded,
-      downloads,
-      views,
+      downloads: 0,
+      views: 0,
       featured: spec.featured ?? false,
       storagePath: null,
       linkUrl: null,
@@ -656,65 +642,13 @@ function buildDescription(spec: Spec): string {
   return `${spec.type} for ${spec.grade} ${spec.area} (${spec.subject}) aligned to competency ${spec.code}. ${spec.competency} Quality-assured by the ${DIVISION} Learning Resource Management System and contextualized for learners in ${subOfficeFor(spec.school)}.`;
 }
 
-export function buildDownloadEvents(resources: LearningResource[]): DownloadEvent[] {
-  const rand = mulberry32(77712);
-  const events: DownloadEvent[] = [];
-  resources
-    .filter((r) => r.status === "published")
-    .forEach((r) => {
-      const sample = Math.min(r.downloads, 90);
-      for (let i = 0; i < sample; i += 1) {
-        const daysAgo = Math.floor(rand() * 360);
-        events.push({
-          id: `${r.id}-dl-${i}`,
-          resourceId: r.id,
-          at: iso(daysAgo, rand),
-          subOffice: r.subOffice,
-          school: r.school,
-        });
-      }
-    });
-  return events;
+/** Analytics are now zeroed — no seeded download events. */
+export function buildDownloadEvents(_resources: LearningResource[]): DownloadEvent[] {
+  return [];
 }
 
-export function buildFeedback(resources: LearningResource[]): Feedback[] {
-  const rand = mulberry32(4242);
-  const authors = [
-    "T. Marivic Aguila",
-    "T. Bernard Sison",
-    "MT-I Grace Cueto",
-    "Principal Noel Bituin",
-    "T. Kim Solis",
-    "T. Rowena Perez",
-    "LR Coordinator Jay Cabral",
-  ];
-  const comments = [
-    "Very usable for our catch-up Fridays. The contextualized examples resonate with our learners.",
-    "Clear instructions and well-sequenced activities. Printed copies were easy to reproduce.",
-    "Learners enjoyed the local examples. Suggest adding an answer key for independent study.",
-    "Excellent quality assurance. Aligned exactly with the MELC we are working on this quarter.",
-    "Some diagrams appear pixelated when printed in A4. Otherwise a strong material.",
-    "Please consider a Filipino translation for lower sections.",
-  ];
-  const feedback: Feedback[] = [];
-  resources
-    .filter((r) => r.status === "published")
-    .forEach((r, ri) => {
-      const count = 1 + Math.floor(rand() * 4);
-      for (let i = 0; i < count; i += 1) {
-        const stars = Math.min(5, 3 + Math.floor(rand() * 3));
-        feedback.push({
-          id: `${r.id}-fb-${i}`,
-          resourceId: r.id,
-          author: authors[(ri + i) % authors.length],
-          stars,
-          comment: comments[(ri + i * 2) % comments.length],
-          kind: stars <= 3 && i % 3 === 2 ? "suggestion" : "review",
-          createdAt: iso(Math.floor(rand() * 180) + 3, rand),
-        });
-      }
-    });
-  return feedback;
+export function buildFeedback(_resources: LearningResource[]): Feedback[] {
+  return [];
 }
 
 export function buildNotifications(resources: LearningResource[]): AppNotification[] {
@@ -747,7 +681,7 @@ export function buildNotifications(resources: LearningResource[]): AppNotificati
       id: `n-res-${i}`,
       kind: "resource",
       title: `New learning resource: ${r.title}`,
-      body: `${r.resourceType} · ${r.gradeLevel} ${r.learningArea} · uploaded by ${r.author} of ${r.school}.`,
+      body: `${r.resourceType} · ${r.gradeLevel} ${r.learningArea} · uploaded by ${r.author} of ${r.schools[0]}.`,
       at: iso(i + 1, rand),
       read: i > 1,
       resourceId: r.id,

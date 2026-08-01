@@ -1,10 +1,10 @@
 import { memo } from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, Download, Eye } from "lucide-react";
+import { Bookmark, ExternalLink, Eye } from "lucide-react";
 
 import { FileKindTag, MetaChip, StarRating, StatusPill } from "@/components/atoms";
 import { cn } from "@/lib/utils";
-import { formatNumber, formatRelative, formatSize } from "@/lib/format";
+import { formatNumber, formatRelative } from "@/lib/format";
 import { useLrms, useRatingIndex } from "@/lib/store";
 import type { LearningResource } from "@/lib/types";
 
@@ -56,12 +56,12 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
             {resource.title}
           </h3>
           <p className="mt-1 line-clamp-1 text-[13px] text-muted-foreground">
-            {resource.gradeLevel} · {resource.learningArea} · {resource.quarter} · {resource.school}
+            {resource.gradeLevel} · {resource.learningArea} · {resource.quarter} · {resource.schools[0] ?? "—"}
           </p>
         </div>
-        <div className="hidden shrink-0 items-center gap-5 text-[12px] text-muted-foreground sm:flex">
+        <div className="hidden shrink-0 items-center gap-5 text-[13px] text-muted-foreground sm:flex">
           <span className="tabular inline-flex items-center gap-1">
-            <Download className="h-3.5 w-3.5" /> {formatNumber(resource.downloads)}
+            <ExternalLink className="h-3.5 w-3.5" /> {formatNumber(resource.downloads)}
           </span>
           <StarRating value={rating.average} count={rating.count} size={12} />
         </div>
@@ -93,7 +93,7 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
         <h3 className="mt-1.5 line-clamp-2 font-display text-[17px] font-semibold leading-snug text-ink transition-colors group-hover:text-red-dark">
           {resource.title}
         </h3>
-        <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">{resource.learningCompetency}</p>
+        <p className="mt-2 line-clamp-2 text-[14px] leading-relaxed text-muted-foreground">{resource.learningCompetency}</p>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
           <MetaChip>{resource.gradeLevel}</MetaChip>
@@ -107,19 +107,19 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
               <StatusPill status={resource.status} />
             </div>
           )}
-          <div className="flex items-center justify-between border-t border-dashed border-border pt-3 text-[11px] text-muted-foreground">
+          <div className="flex items-center justify-between border-t border-dashed border-border pt-3 text-[12px] text-muted-foreground">
             <StarRating value={rating.average} count={rating.count} size={12} />
             <span className="tabular flex items-center gap-3">
               <span className="inline-flex items-center gap-1">
                 <Eye className="h-3.5 w-3.5" /> {formatNumber(resource.views)}
               </span>
               <span className="inline-flex items-center gap-1">
-                <Download className="h-3.5 w-3.5" /> {formatNumber(resource.downloads)}
+                <ExternalLink className="h-3.5 w-3.5" /> {formatNumber(resource.downloads)}
               </span>
             </span>
           </div>
-          <p className="mt-2 truncate text-[11px] text-muted-foreground/80">
-            {formatSize(resource.fileSizeKB)} · {resource.language} · {formatRelative(resource.dateUploaded)}
+          <p className="mt-2 truncate text-[12px] text-muted-foreground/80">
+            {resource.language} · {formatRelative(resource.dateUploaded)}
           </p>
         </div>
       </div>

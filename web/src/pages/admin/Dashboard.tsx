@@ -323,7 +323,7 @@ export default function AdminDashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold text-ink">{resource.title}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {resource.author} · {resource.school} · {formatRelative(resource.dateUploaded)}
+                      {resource.author} · {resource.schools[0] ?? "—"} · {formatRelative(resource.dateUploaded)}
                     </p>
                   </div>
                   <StatusPill status={resource.status} />

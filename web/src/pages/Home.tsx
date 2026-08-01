@@ -38,7 +38,7 @@ export default function Home() {
       downloads,
       views,
       contributors: new Set(published.map((r) => r.author)).size,
-      schools: new Set(published.map((r) => r.school)).size,
+      schools: new Set(published.flatMap((r) => r.schools)).size,
       users: users.length,
       thisMonth: downloadEvents.filter((e) => Date.now() - new Date(e.at).getTime() < 30 * 86400000).length,
     };

@@ -8,7 +8,7 @@ import { ResourceCard } from "@/components/ResourceCard";
 import { Eyebrow, SectionHeading } from "@/components/atoms";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { formatRelative, formatSize } from "@/lib/format";
+import { formatRelative } from "@/lib/format";
 import { useLrms } from "@/lib/store";
 
 export default function Library() {
@@ -135,7 +135,7 @@ export default function Library() {
                 const items = collection.resourceIds
                   .map((id) => byId.get(id))
                   .filter((r): r is NonNullable<typeof r> => Boolean(r));
-                const totalKB = items.reduce((sum, r) => sum + r.fileSizeKB, 0);
+                const totalPages = items.reduce((sum, r) => sum + r.pages, 0);
                 return (
                   <div key={collection.id} className="plate overflow-hidden">
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3">
@@ -144,7 +144,7 @@ export default function Library() {
                           <FolderOpen className="h-4 w-4 text-red-dark" /> {collection.name}
                         </h3>
                         <p className="mt-0.5 text-[12px] text-muted-foreground">
-                          {items.length} resource{items.length === 1 ? "" : "s"} · {formatSize(totalKB)} · created{" "}
+                          {items.length} resource{items.length === 1 ? "" : "s"} · {totalPages} pages total · created{" "}
                           {formatRelative(collection.createdAt)}
                         </p>
                       </div>

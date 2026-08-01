@@ -45,7 +45,7 @@ import type {
   Session,
 } from "./types";
 
-const STORAGE_KEY = "sdo-batangas-lrms:v1";
+const STORAGE_KEY = "sdo-batangas-lrms:v2";
 const VIEWER_ID = "public";
 
 interface PersistedShape {
@@ -91,16 +91,8 @@ function defaultState(): PersistedShape {
   return {
     resources,
     feedback: buildFeedback(resources),
-    bookmarks: [resources[0].id, resources[5].id],
-    collections: [
-      {
-        id: "COL-0001",
-        name: "Catch-Up Fridays — Reading",
-        description: "Materials ready to print for weekly reading remediation sessions.",
-        resourceIds: [resources[5].id, resources[1].id],
-        createdAt: new Date(Date.now() - 86400000 * 12).toISOString(),
-      },
-    ],
+    bookmarks: [],
+    collections: [],
     notifications: buildNotifications(resources),
     users: buildUsers(),
     session: null,
@@ -120,6 +112,8 @@ function loadState(): PersistedShape {
       ...r,
       storagePath: r.storagePath ?? null,
       linkUrl: r.linkUrl ?? null,
+      schools: Array.isArray(r.schools) ? r.schools : [],
+      subOffices: Array.isArray(r.subOffices) ? r.subOffices : [],
     }));
     return {
       resources: resources.length ? resources : base.resources,
@@ -199,11 +193,9 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const seededDownloads = useMemo<DownloadEvent[]>(() => buildDownloadEvents(buildResources()), []);
-
   const downloadEvents = useMemo<DownloadEvent[]>(
-    () => [...seededDownloads, ...state.extraDownloads],
-    [seededDownloads, state.extraDownloads],
+    () => [...state.extraDownloads],
+    [state.extraDownloads],
   );
 
   const login = useCallback((username: string, password: string): boolean => {
@@ -307,7 +299,6 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
               ...r,
               version: version.version,
               fileName: version.fileName,
-              fileSizeKB: version.fileSizeKB,
               versions: [...r.versions, version],
               dateUploaded: version.uploadedAt,
             }
@@ -328,8 +319,8 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
         id: `${id}-live-${Date.now()}`,
         resourceId: id,
         at,
-        subOffice: target.subOffice,
-        school: target.school,
+        subOffices: target.subOffices,
+        schools: target.schools,
       };
       void incrementCloudDownloads(id);
       void insertCloudDownloadEvent(event);

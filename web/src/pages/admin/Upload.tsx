@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Link2, Plus, Save, Send, Trash2, X } from "lucide-react";
+import { Check, CheckCircle2, Link2, Plus, Save, Send, Trash2, X } from "lucide-react";
 
 import { AdminShell } from "@/components/AdminShell";
 import { Eyebrow, FileKindTag, StatusPill } from "@/components/atoms";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { formatRelative, formatSize } from "@/lib/format";
+import { formatRelative } from "@/lib/format";
 import {
   COPYRIGHT_OPTIONS,
   DIVISION,
@@ -22,8 +22,6 @@ import {
   SHS_STRANDS,
   SUB_OFFICE_NAMES,
   keyStageFor,
-  schoolsForSubOffice,
-  subOfficeFor,
 } from "@/lib/taxonomy";
 import { useLrms } from "@/lib/store";
 import type { FileKind, LearningResource, Quarter, ResourceStatus } from "@/lib/types";
@@ -38,7 +36,6 @@ function detectKindFromUrl(url: string): FileKind {
   if (ext === "pptx" || ext === "ppt") return "pptx";
   if (ext === "epub") return "epub";
   if (ext === "pdf") return "pdf";
-  // Default: check if it's a known video/audio platform URL
   const lower = url.toLowerCase();
   if (lower.includes("youtube.com") || lower.includes("youtu.be") || lower.includes("vimeo.com")) return "video";
   if (lower.includes("soundcloud.com")) return "audio";
@@ -59,10 +56,12 @@ interface Staged {
   competencyCode: string;
   learningCompetency: string;
   melcReference: string;
+  pages: number;
+  durationSec: number;
   language: string;
   author: string;
-  school: string;
-  subOffice: string;
+  schools: string[];
+  subOffices: string[];
   copyright: string;
   schoolYear: string;
   shsStrand: string;
@@ -76,8 +75,8 @@ interface BatchDefaults {
   resourceType: string;
   language: string;
   author: string;
-  school: string;
-  subOffice: string;
+  schools: string[];
+  subOffices: string[];
   schoolYear: string;
   copyright: string;
 }
@@ -89,8 +88,8 @@ const DEFAULTS: BatchDefaults = {
   resourceType: RESOURCE_TYPES[0],
   language: LANGUAGES[0],
   author: "",
-  school: SCHOOL_NAMES[0],
-  subOffice: subOfficeFor(SCHOOL_NAMES[0]),
+  schools: [],
+  subOffices: [],
   schoolYear: SCHOOL_YEARS[2],
   copyright: COPYRIGHT_OPTIONS[0],
 };
@@ -98,7 +97,7 @@ const DEFAULTS: BatchDefaults = {
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <label className={cn("block", className)}>
-      <span className="mb-1.5 block text-[11px] uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
+      <span className="mb-1.5 block text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</span>
       {children}
     </label>
   );
@@ -126,6 +125,99 @@ function Picker({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+/** Multi-select chip picker for schools and sub-offices. */
+function MultiSelect({
+  label,
+  options,
+  selected,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  placeholder: string;
+}) {
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return options;
+    return options.filter((o) => o.toLowerCase().includes(q));
+  }, [options, search]);
+
+  const toggle = (value: string) => {
+    onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
+  };
+
+  return (
+    <div>
+      <span className="mb-1.5 block text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</span>
+      {selected.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {selected.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => toggle(value)}
+              className="focus-ring inline-flex items-center gap-1 rounded-sm bg-red/15 px-2 py-1 text-[12px] font-medium text-red-dark hover:bg-red/25"
+            >
+              {value}
+              <X className="h-3 w-3" />
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="text-[11px] text-muted-foreground underline hover:text-ink"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={placeholder}
+        className="mb-2 h-8 rounded-sm text-[13px]"
+      />
+      <div className="max-h-40 overflow-y-auto rounded-sm border border-border bg-card">
+        {filtered.length === 0 && (
+          <p className="px-3 py-4 text-center text-[12px] text-muted-foreground">No matches found.</p>
+        )}
+        {filtered.map((option) => {
+          const isSel = selected.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggle(option)}
+              className={cn(
+                "flex w-full items-center gap-2 border-b border-border/40 px-3 py-2 text-left text-[13px] transition-colors last:border-b-0",
+                isSel ? "bg-red/10 text-red-dark" : "text-ink hover:bg-muted",
+              )}
+            >
+              <span
+                className={cn(
+                  "grid h-4 w-4 shrink-0 place-items-center rounded-sm border",
+                  isSel ? "border-red bg-red text-white" : "border-border",
+                )}
+              >
+                {isSel && <Check className="h-3 w-3" strokeWidth={3} />}
+              </span>
+              <span className="truncate">{option}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {selected.length} selected · click items to toggle
+      </p>
+    </div>
   );
 }
 
@@ -164,10 +256,12 @@ export default function AdminUpload() {
       competencyCode: "",
       learningCompetency: "",
       melcReference: "",
+      pages: 0,
+      durationSec: 0,
       language: batch.language,
       author: batch.author,
-      school: batch.school,
-      subOffice: batch.subOffice,
+      schools: batch.schools.length > 0 ? [...batch.schools] : [],
+      subOffices: batch.subOffices.length > 0 ? [...batch.subOffices] : [],
       copyright: batch.copyright,
       schoolYear: batch.schoolYear,
       shsStrand: "Not applicable",
@@ -192,8 +286,8 @@ export default function AdminUpload() {
         resourceType: batch.resourceType,
         language: batch.language,
         author: batch.author || item.author,
-        school: batch.school,
-        subOffice: batch.subOffice,
+        schools: batch.schools.length > 0 ? [...batch.schools] : item.schools,
+        subOffices: batch.subOffices.length > 0 ? [...batch.subOffices] : item.subOffices,
         schoolYear: batch.schoolYear,
         copyright: batch.copyright,
       })),
@@ -231,13 +325,12 @@ export default function AdminUpload() {
       resourceType: item.resourceType,
       fileKind: item.fileKind,
       fileName: item.linkUrl.trim(),
-      fileSizeKB: 0,
-      pages: ["pdf", "docx", "epub", "pptx"].includes(item.fileKind) ? 12 : 0,
-      durationSec: item.fileKind === "video" || item.fileKind === "audio" ? 420 : 0,
+      pages: item.pages,
+      durationSec: item.durationSec,
       language: item.language,
       author: item.author.trim(),
-      school: item.school,
-      subOffice: item.subOffice,
+      schools: item.schools.length > 0 ? item.schools : [],
+      subOffices: item.subOffices.length > 0 ? item.subOffices : [],
       division: DIVISION,
       publisher: `${DIVISION} — Curriculum Implementation Division`,
       copyright: item.copyright,
@@ -251,7 +344,6 @@ export default function AdminUpload() {
         {
           version: "v1.0",
           fileName: item.linkUrl.trim(),
-          fileSizeKB: 0,
           uploadedAt: now,
           note: status === "published" ? "Initial publication." : "Initial upload saved as draft.",
         },
@@ -291,14 +383,14 @@ export default function AdminUpload() {
               <Link2 className="h-6 w-6 text-red-dark" strokeWidth={1.7} />
             </span>
             <h2 className="font-display text-xl font-semibold text-ink">Add learning resource by link</h2>
-            <p className="max-w-md text-[13px] text-muted-foreground">
+            <p className="max-w-md text-[14px] text-muted-foreground">
               Paste the URL of the learning resource (Google Drive, YouTube, DepEd Commons, etc.). No file upload
               needed — resources are linked, not stored.
             </p>
             <button
               type="button"
               onClick={addResource}
-              className="focus-ring mt-1 inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-red-dark"
+              className="focus-ring mt-1 inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2.5 text-[14px] font-semibold text-white hover:bg-red-dark"
             >
               <Plus className="h-4 w-4" /> Add resource
             </button>
@@ -314,7 +406,7 @@ export default function AdminUpload() {
                     type="button"
                     onClick={() => void commit("draft")}
                     disabled={committing}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink disabled:opacity-60"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink disabled:opacity-60"
                   >
                     <Save className="h-3.5 w-3.5" /> {committing ? "Saving…" : "Save as draft"}
                   </button>
@@ -322,7 +414,7 @@ export default function AdminUpload() {
                     type="button"
                     onClick={() => void commit("pending")}
                     disabled={committing}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/60 bg-red/15 px-3 py-1.5 text-[12px] font-medium text-red-dark disabled:opacity-60"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/60 bg-red/15 px-3 py-1.5 text-[13px] font-medium text-red-dark disabled:opacity-60"
                   >
                     <Send className="h-3.5 w-3.5" /> {committing ? "Submitting…" : "Submit for QA"}
                   </button>
@@ -330,7 +422,7 @@ export default function AdminUpload() {
                     type="button"
                     onClick={() => void commit("published")}
                     disabled={committing}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-red px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-60"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-red px-3 py-1.5 text-[13px] font-semibold text-white disabled:opacity-60"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" /> {committing ? "Publishing…" : "Publish now"}
                   </button>
@@ -340,9 +432,6 @@ export default function AdminUpload() {
               <ul className="divide-y divide-border/60">
                 {staged.map((item) => {
                   const expanded = open === item.key;
-                  const schoolOptions = item.subOffice
-                    ? schoolsForSubOffice(item.subOffice)
-                    : SCHOOL_NAMES;
                   return (
                     <li key={item.key}>
                       <div className="flex items-center gap-3 px-4 py-3">
@@ -352,17 +441,17 @@ export default function AdminUpload() {
                           onClick={() => setOpen(expanded ? "" : item.key)}
                           className="min-w-0 flex-1 text-left"
                         >
-                          <p className="truncate text-[13px] font-semibold text-ink">
+                          <p className="truncate text-[14px] font-semibold text-ink">
                             {item.title || "Untitled resource"}
                           </p>
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-[12px] text-muted-foreground">
                             {item.linkUrl || "No link entered"} · {item.gradeLevel} · {item.learningArea}
                           </p>
                         </button>
                         <button
                           type="button"
                           onClick={() => setOpen(expanded ? "" : item.key)}
-                          className="focus-ring rounded-sm border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-ink"
+                          className="focus-ring rounded-sm border border-border bg-card px-2.5 py-1 text-[12px] font-medium text-ink"
                         >
                           {expanded ? "Collapse" : "Edit metadata"}
                         </button>
@@ -477,32 +566,32 @@ export default function AdminUpload() {
                               className="rounded-sm text-[13px]"
                             />
                           </Field>
+                          <Field label="Number of pages">
+                            <Input
+                              type="number"
+                              min={0}
+                              value={item.pages}
+                              onChange={(e) => patchStaged(item.key, { pages: Math.max(0, Number(e.target.value) || 0) })}
+                              placeholder="0"
+                              className="h-9 rounded-sm text-[13px]"
+                            />
+                          </Field>
+                          <Field label="Duration (seconds, for video/audio)">
+                            <Input
+                              type="number"
+                              min={0}
+                              value={item.durationSec}
+                              onChange={(e) => patchStaged(item.key, { durationSec: Math.max(0, Number(e.target.value) || 0) })}
+                              placeholder="0"
+                              className="h-9 rounded-sm text-[13px]"
+                            />
+                          </Field>
                           <Field label="Author">
                             <Input
                               value={item.author}
                               onChange={(e) => patchStaged(item.key, { author: e.target.value })}
                               placeholder="Full name of the writer"
                               className="h-9 rounded-sm text-[13px]"
-                            />
-                          </Field>
-                          <Field label="Sub-Office">
-                            <Picker
-                              value={item.subOffice}
-                              options={SUB_OFFICE_NAMES}
-                              onChange={(v) => {
-                                const schools = schoolsForSubOffice(v);
-                                patchStaged(item.key, {
-                                  subOffice: v,
-                                  school: schools[0] ?? item.school,
-                                });
-                              }}
-                            />
-                          </Field>
-                          <Field label="School">
-                            <Picker
-                              value={item.school}
-                              options={schoolOptions}
-                              onChange={(v) => patchStaged(item.key, { school: v })}
                             />
                           </Field>
                           <Field label="Language">
@@ -512,6 +601,24 @@ export default function AdminUpload() {
                               onChange={(v) => patchStaged(item.key, { language: v })}
                             />
                           </Field>
+                          <div className="md:col-span-2">
+                            <MultiSelect
+                              label="Sub-offices (select multiple)"
+                              options={SUB_OFFICE_NAMES}
+                              selected={item.subOffices}
+                              onChange={(values) => patchStaged(item.key, { subOffices: values })}
+                              placeholder="Search sub-offices…"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <MultiSelect
+                              label="Schools (select multiple)"
+                              options={SCHOOL_NAMES}
+                              selected={item.schools}
+                              onChange={(values) => patchStaged(item.key, { schools: values })}
+                              placeholder="Search schools…"
+                            />
+                          </div>
                           <Field label="School year">
                             <Picker
                               value={item.schoolYear}
@@ -519,7 +626,7 @@ export default function AdminUpload() {
                               onChange={(v) => patchStaged(item.key, { schoolYear: v })}
                             />
                           </Field>
-                          <Field label="Copyright" className="md:col-span-2">
+                          <Field label="Copyright">
                             <Picker
                               value={item.copyright}
                               options={COPYRIGHT_OPTIONS}
@@ -550,7 +657,7 @@ export default function AdminUpload() {
             </div>
             <ul className="divide-y divide-border/60">
               {drafts.length === 0 && (
-                <li className="px-4 py-8 text-center text-[13px] text-muted-foreground">
+                <li className="px-4 py-8 text-center text-[14px] text-muted-foreground">
                   No drafts pending. Everything has been reviewed and published.
                 </li>
               )}
@@ -558,8 +665,8 @@ export default function AdminUpload() {
                 <li key={resource.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                   <FileKindTag kind={resource.fileKind} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-ink">{resource.title}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="truncate text-[14px] font-semibold text-ink">{resource.title}</p>
+                    <p className="text-[12px] text-muted-foreground">
                       {resource.id} · {resource.author} · saved {formatRelative(resource.dateUploaded)}
                     </p>
                   </div>
@@ -572,7 +679,7 @@ export default function AdminUpload() {
                           setResourceStatus(resource.id, "pending");
                           toast.success("Draft submitted for quality assurance");
                         }}
-                        className="focus-ring rounded-sm border border-red/60 bg-red/15 px-2.5 py-1.5 text-[11px] font-medium text-red-dark"
+                        className="focus-ring rounded-sm border border-red/60 bg-red/15 px-2.5 py-1.5 text-[12px] font-medium text-red-dark"
                       >
                         Submit for QA
                       </button>
@@ -583,7 +690,7 @@ export default function AdminUpload() {
                         setResourceStatus(resource.id, "published");
                         toast.success("Resource published");
                       }}
-                      className="focus-ring rounded-sm bg-red px-2.5 py-1.5 text-[11px] font-semibold text-white"
+                      className="focus-ring rounded-sm bg-red px-2.5 py-1.5 text-[12px] font-semibold text-white"
                     >
                       Publish
                     </button>
@@ -612,7 +719,7 @@ export default function AdminUpload() {
               <Eyebrow className="text-ink">Batch metadata defaults</Eyebrow>
             </div>
             <div className="space-y-3 p-4">
-              <p className="text-[12px] leading-relaxed text-muted-foreground">
+              <p className="text-[13px] leading-relaxed text-muted-foreground">
                 Set common values once — every newly added resource inherits them, and you can push them to all staged
                 resources at any time.
               </p>
@@ -652,23 +759,20 @@ export default function AdminUpload() {
                   className="h-9 rounded-sm text-[13px]"
                 />
               </Field>
-              <Field label="Sub-Office">
-                <Picker
-                  value={batch.subOffice}
-                  options={SUB_OFFICE_NAMES}
-                  onChange={(v) => {
-                    const schools = schoolsForSubOffice(v);
-                    setBatch({ ...batch, subOffice: v, school: schools[0] ?? batch.school });
-                  }}
-                />
-              </Field>
-              <Field label="School">
-                <Picker
-                  value={batch.school}
-                  options={schoolsForSubOffice(batch.subOffice)}
-                  onChange={(v) => setBatch({ ...batch, school: v })}
-                />
-              </Field>
+              <MultiSelect
+                label="Sub-offices"
+                options={SUB_OFFICE_NAMES}
+                selected={batch.subOffices}
+                onChange={(values) => setBatch({ ...batch, subOffices: values })}
+                placeholder="Search sub-offices…"
+              />
+              <MultiSelect
+                label="Schools"
+                options={SCHOOL_NAMES}
+                selected={batch.schools}
+                onChange={(values) => setBatch({ ...batch, schools: values })}
+                placeholder="Search schools…"
+              />
               <Field label="Language">
                 <Picker
                   value={batch.language}
@@ -694,7 +798,7 @@ export default function AdminUpload() {
                 type="button"
                 onClick={applyBatchToAll}
                 disabled={staged.length === 0}
-                className="focus-ring w-full rounded-sm border border-red/25 bg-card px-3 py-2 text-[12px] font-semibold text-ink disabled:opacity-50"
+                className="focus-ring w-full rounded-sm border border-red/25 bg-card px-3 py-2 text-[13px] font-semibold text-ink disabled:opacity-50"
               >
                 Apply to all staged resources
               </button>

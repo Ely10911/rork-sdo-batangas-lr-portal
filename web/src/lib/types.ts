@@ -12,7 +12,6 @@ export type UserRole = "admin" | "viewer";
 export interface ResourceVersion {
   version: string;
   fileName: string;
-  fileSizeKB: number;
   uploadedAt: string;
   note: string;
   /** Supabase Storage path for this version's file, when uploaded to the cloud. */
@@ -47,13 +46,15 @@ export interface LearningResource {
   resourceType: string;
   fileKind: FileKind;
   fileName: string;
-  fileSizeKB: number;
+  /** Number of pages — admin-editable. */
   pages: number;
   durationSec: number;
   language: string;
   author: string;
-  school: string;
-  subOffice: string;
+  /** Multiple schools can be selected for a resource. */
+  schools: string[];
+  /** Multiple sub-offices can be selected for a resource. */
+  subOffices: string[];
   division: string;
   publisher: string;
   copyright: string;
@@ -77,8 +78,8 @@ export interface DownloadEvent {
   id: string;
   resourceId: string;
   at: string;
-  subOffice: string;
-  school: string;
+  subOffices: string[];
+  schools: string[];
 }
 
 export interface Collection {

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Archive, CheckCircle2, Filter, History, Pencil, Search, Send, Trash2, X } from "lucide-react";
+import { Archive, Check, CheckCircle2, Filter, History, Pencil, Search, Send, Trash2, X } from "lucide-react";
 
 import { AdminShell } from "@/components/AdminShell";
 import { Eyebrow, FileKindTag, StatusPill } from "@/components/atoms";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { formatDate, formatNumber, formatSize } from "@/lib/format";
+import { formatDate, formatNumber } from "@/lib/format";
 import {
   COPYRIGHT_OPTIONS,
   GRADE_LEVELS,
@@ -22,7 +22,6 @@ import {
   SCHOOL_YEARS,
   SUB_OFFICE_NAMES,
   keyStageFor,
-  subOfficeFor,
 } from "@/lib/taxonomy";
 import { useLrms } from "@/lib/store";
 import type { LearningResource, Quarter, ResourceStatus } from "@/lib/types";
@@ -34,6 +33,99 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "draft", label: "Drafts" },
   { value: "archived", label: "Archived" },
 ];
+
+/** Multi-select chip picker for schools and sub-offices. */
+function MultiSelect({
+  label,
+  options,
+  selected,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  placeholder: string;
+}) {
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return options;
+    return options.filter((o) => o.toLowerCase().includes(q));
+  }, [options, search]);
+
+  const toggle = (value: string) => {
+    onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
+  };
+
+  return (
+    <div>
+      <span className="mb-1.5 block text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</span>
+      {selected.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {selected.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => toggle(value)}
+              className="focus-ring inline-flex items-center gap-1 rounded-sm bg-red/15 px-2 py-1 text-[12px] font-medium text-red-dark hover:bg-red/25"
+            >
+              {value}
+              <X className="h-3 w-3" />
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="text-[11px] text-muted-foreground underline hover:text-ink"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={placeholder}
+        className="mb-2 h-8 rounded-sm text-[13px]"
+      />
+      <div className="max-h-40 overflow-y-auto rounded-sm border border-border bg-card">
+        {filtered.length === 0 && (
+          <p className="px-3 py-4 text-center text-[12px] text-muted-foreground">No matches found.</p>
+        )}
+        {filtered.map((option) => {
+          const isSel = selected.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggle(option)}
+              className={cn(
+                "flex w-full items-center gap-2 border-b border-border/40 px-3 py-2 text-left text-[13px] transition-colors last:border-b-0",
+                isSel ? "bg-red/10 text-red-dark" : "text-ink hover:bg-muted",
+              )}
+            >
+              <span
+                className={cn(
+                  "grid h-4 w-4 shrink-0 place-items-center rounded-sm border",
+                  isSel ? "border-red bg-red text-white" : "border-border",
+                )}
+              >
+                {isSel && <Check className="h-3 w-3" strokeWidth={3} />}
+              </span>
+              <span className="truncate">{option}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {selected.length} selected · click items to toggle
+      </p>
+    </div>
+  );
+}
 
 export default function ManageResources() {
   const { resources, updateResource, deleteResource, setResourceStatus, addVersion } = useLrms();
@@ -57,7 +149,7 @@ export default function ManageResources() {
               r.id.toLowerCase().includes(q) ||
               r.competencyCode.toLowerCase().includes(q) ||
               r.author.toLowerCase().includes(q) ||
-              r.school.toLowerCase().includes(q)
+              r.schools.some((s) => s.toLowerCase().includes(q))
             );
           }
           return true;
@@ -98,7 +190,7 @@ export default function ManageResources() {
           />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="h-9 w-[168px] rounded-sm text-[12px]">
+          <SelectTrigger className="h-9 w-[168px] rounded-sm text-[13px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -110,7 +202,7 @@ export default function ManageResources() {
           </SelectContent>
         </Select>
         <Select value={area} onValueChange={setArea}>
-          <SelectTrigger className="h-9 w-[196px] rounded-sm text-[12px]">
+          <SelectTrigger className="h-9 w-[196px] rounded-sm text-[13px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -122,47 +214,47 @@ export default function ManageResources() {
             ))}
           </SelectContent>
         </Select>
-        <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground">
           <Filter className="h-3.5 w-3.5" /> {rows.length} shown
         </span>
       </div>
 
       {selected.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-red/50 bg-red/12 px-4 py-3">
-          <span className="text-[13px] font-semibold text-ink">{selected.length} selected</span>
+          <span className="text-[14px] font-semibold text-ink">{selected.length} selected</span>
           <div className="ml-auto flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => bulk("published")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-red px-3 py-1.5 text-[12px] font-medium text-white"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-red px-3 py-1.5 text-[13px] font-medium text-white"
             >
               <CheckCircle2 className="h-3.5 w-3.5" /> Publish
             </button>
             <button
               type="button"
               onClick={() => bulk("pending")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink"
             >
               <Send className="h-3.5 w-3.5" /> Send to QA
             </button>
             <button
               type="button"
               onClick={() => bulk("archived")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink"
             >
               <Archive className="h-3.5 w-3.5" /> Archive
             </button>
             <button
               type="button"
               onClick={() => bulk("delete")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-[12px] font-medium text-destructive"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-[13px] font-medium text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
             <button
               type="button"
               onClick={() => setSelected([])}
-              className="focus-ring rounded-sm px-2 py-1.5 text-[12px] text-muted-foreground hover:text-ink"
+              className="focus-ring rounded-sm px-2 py-1.5 text-[13px] text-muted-foreground hover:text-ink"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -185,7 +277,7 @@ export default function ManageResources() {
                   />
                 </th>
                 {["Resource", "Classification", "File", "Status", "Usage", "Actions"].map((head) => (
-                  <th key={head} className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em]">
+                  <th key={head} className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em]">
                     {head}
                   </th>
                 ))}
@@ -208,36 +300,38 @@ export default function ManageResources() {
                     />
                   </td>
                   <td className="max-w-[320px] px-3 py-3">
-                    <Link to={`/resource/${resource.id}`} className="block truncate text-[13px] font-semibold text-ink hover:text-red-dark">
+                    <Link to={`/resource/${resource.id}`} className="block truncate text-[14px] font-semibold text-ink hover:text-red-dark">
                       {resource.title}
                     </Link>
-                    <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                    <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                       {resource.id} · {resource.competencyCode} · {resource.version}
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                      {resource.author} · {resource.school}
+                    <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                      {resource.author} · {resource.schools[0] ?? "—"}
                     </p>
                   </td>
-                  <td className="px-3 py-3 text-[12px] text-ink">
+                  <td className="px-3 py-3 text-[13px] text-ink">
                     <p>
                       {resource.gradeLevel} · {resource.learningArea}
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[12px] text-muted-foreground">
                       {resource.quarter} · {resource.resourceType}
                     </p>
-                    <p className="text-[11px] text-muted-foreground">{resource.schoolYear}</p>
+                    <p className="text-[12px] text-muted-foreground">{resource.schoolYear}</p>
                   </td>
                   <td className="px-3 py-3">
                     <FileKindTag kind={resource.fileKind} />
-                    <p className="tabular mt-1 text-[11px] text-muted-foreground">{formatSize(resource.fileSizeKB)}</p>
-                    <p className="text-[11px] text-muted-foreground">{formatDate(resource.dateUploaded)}</p>
+                    <p className="mt-1 text-[12px] text-muted-foreground">
+                      {resource.durationSec > 0 ? `${resource.durationSec}s` : `${resource.pages} pages`}
+                    </p>
+                    <p className="text-[12px] text-muted-foreground">{formatDate(resource.dateUploaded)}</p>
                   </td>
                   <td className="px-3 py-3">
                     <StatusPill status={resource.status} />
                   </td>
-                  <td className="tabular px-3 py-3 text-[12px] text-ink">
+                  <td className="tabular px-3 py-3 text-[13px] text-ink">
                     <p>{formatNumber(resource.downloads)} downloads</p>
-                    <p className="text-[11px] text-muted-foreground">{formatNumber(resource.views)} views</p>
+                    <p className="text-[12px] text-muted-foreground">{formatNumber(resource.views)} views</p>
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex flex-wrap gap-1">
@@ -277,7 +371,7 @@ export default function ManageResources() {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-[14px] text-muted-foreground">
                     No resources match the current filters.
                   </td>
                 </tr>
@@ -301,14 +395,13 @@ export default function ManageResources() {
       <VersionDialog
         resource={versioning}
         onClose={() => setVersioning(null)}
-        onSave={async (note, fileSizeKB, fileName, newLinkUrl) => {
+        onSave={async (note, fileName, newLinkUrl) => {
           if (!versioning) return;
           const minor = versioning.versions.length;
           const versionLabel = `v1.${minor}`;
           addVersion(versioning.id, {
             version: versionLabel,
             fileName,
-            fileSizeKB,
             uploadedAt: new Date().toISOString(),
             note,
           });
@@ -355,7 +448,7 @@ function IconAction({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
+      <span className="mb-1.5 block text-[12px] uppercase tracking-[0.08em] text-muted-foreground">{label}</span>
       {children}
     </label>
   );
@@ -388,7 +481,7 @@ function EditDialog({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <Field label="Title">
-              <Input value={draft.title} onChange={(e) => set({ title: e.target.value })} className="h-9 rounded-sm text-[13px]" />
+              <Input value={draft.title} onChange={(e) => set({ title: e.target.value })} className="h-9 rounded-sm text-[14px]" />
             </Field>
           </div>
           <div className="md:col-span-2">
@@ -397,13 +490,13 @@ function EditDialog({
                 value={draft.description}
                 onChange={(e) => set({ description: e.target.value })}
                 rows={3}
-                className="rounded-sm text-[13px]"
+                className="rounded-sm text-[14px]"
               />
             </Field>
           </div>
           <Field label="Learning area">
             <Select value={draft.learningArea} onValueChange={(v) => set({ learningArea: v })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -416,14 +509,14 @@ function EditDialog({
             </Select>
           </Field>
           <Field label="Subject">
-            <Input value={draft.subject} onChange={(e) => set({ subject: e.target.value })} className="h-9 rounded-sm text-[13px]" />
+            <Input value={draft.subject} onChange={(e) => set({ subject: e.target.value })} className="h-9 rounded-sm text-[14px]" />
           </Field>
           <Field label="Grade level">
             <Select
               value={draft.gradeLevel}
               onValueChange={(v) => set({ gradeLevel: v, keyStage: keyStageFor(v) })}
             >
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -437,7 +530,7 @@ function EditDialog({
           </Field>
           <Field label="Quarter">
             <Select value={draft.quarter} onValueChange={(v) => set({ quarter: v as Quarter })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -453,11 +546,11 @@ function EditDialog({
             <Input
               value={draft.competencyCode}
               onChange={(e) => set({ competencyCode: e.target.value })}
-              className="h-9 rounded-sm font-mono text-[12px]"
+              className="h-9 rounded-sm font-mono text-[13px]"
             />
           </Field>
           <Field label="MELC / CG reference">
-            <Input value={draft.melcReference} onChange={(e) => set({ melcReference: e.target.value })} className="h-9 rounded-sm text-[13px]" />
+            <Input value={draft.melcReference} onChange={(e) => set({ melcReference: e.target.value })} className="h-9 rounded-sm text-[14px]" />
           </Field>
           <div className="md:col-span-2">
             <Field label="Learning competency">
@@ -465,13 +558,13 @@ function EditDialog({
                 value={draft.learningCompetency}
                 onChange={(e) => set({ learningCompetency: e.target.value })}
                 rows={2}
-                className="rounded-sm text-[13px]"
+                className="rounded-sm text-[14px]"
               />
             </Field>
           </div>
           <Field label="Resource type">
             <Select value={draft.resourceType} onValueChange={(v) => set({ resourceType: v })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -485,7 +578,7 @@ function EditDialog({
           </Field>
           <Field label="Language">
             <Select value={draft.language} onValueChange={(v) => set({ language: v })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -497,40 +590,30 @@ function EditDialog({
               </SelectContent>
             </Select>
           </Field>
+          <Field label="Number of pages">
+            <Input
+              type="number"
+              min={0}
+              value={draft.pages}
+              onChange={(e) => set({ pages: Math.max(0, Number(e.target.value) || 0) })}
+              className="h-9 rounded-sm text-[14px]"
+            />
+          </Field>
+          <Field label="Duration (seconds)">
+            <Input
+              type="number"
+              min={0}
+              value={draft.durationSec}
+              onChange={(e) => set({ durationSec: Math.max(0, Number(e.target.value) || 0) })}
+              className="h-9 rounded-sm text-[14px]"
+            />
+          </Field>
           <Field label="Author">
-            <Input value={draft.author} onChange={(e) => set({ author: e.target.value })} className="h-9 rounded-sm text-[13px]" />
-          </Field>
-          <Field label="Sub-Office">
-            <Select value={draft.subOffice} onValueChange={(v) => set({ subOffice: v })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {SUB_OFFICE_NAMES.map((v) => (
-                  <SelectItem key={v} value={v}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="School">
-            <Select value={draft.school} onValueChange={(v) => set({ school: v, subOffice: subOfficeFor(v) })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {SCHOOL_NAMES.map((v) => (
-                  <SelectItem key={v} value={v}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input value={draft.author} onChange={(e) => set({ author: e.target.value })} className="h-9 rounded-sm text-[14px]" />
           </Field>
           <Field label="Copyright">
             <Select value={draft.copyright} onValueChange={(v) => set({ copyright: v })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -544,7 +627,7 @@ function EditDialog({
           </Field>
           <Field label="School year">
             <Select value={draft.schoolYear} onValueChange={(v) => set({ schoolYear: v })}>
-              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -557,11 +640,29 @@ function EditDialog({
             </Select>
           </Field>
           <div className="md:col-span-2">
+            <MultiSelect
+              label="Sub-offices"
+              options={SUB_OFFICE_NAMES}
+              selected={draft.subOffices}
+              onChange={(values) => set({ subOffices: values })}
+              placeholder="Search sub-offices…"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <MultiSelect
+              label="Schools"
+              options={SCHOOL_NAMES}
+              selected={draft.schools}
+              onChange={(values) => set({ schools: values })}
+              placeholder="Search schools…"
+            />
+          </div>
+          <div className="md:col-span-2">
             <Field label="Keywords (comma separated)">
               <Input
                 value={draft.keywords.join(", ")}
                 onChange={(e) => set({ keywords: e.target.value.split(",").map((k) => k.trim()).filter(Boolean) })}
-                className="h-9 rounded-sm text-[13px]"
+                className="h-9 rounded-sm text-[14px]"
               />
             </Field>
           </div>
@@ -571,14 +672,14 @@ function EditDialog({
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring rounded-sm border border-border bg-card px-4 py-2 text-[13px] font-medium text-ink"
+            className="focus-ring rounded-sm border border-border bg-card px-4 py-2 text-[14px] font-medium text-ink"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => onSave(draft)}
-            className="focus-ring rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white"
+            className="focus-ring rounded-sm bg-red px-4 py-2 text-[14px] font-semibold text-white"
           >
             Save metadata
           </button>
@@ -595,7 +696,7 @@ function VersionDialog({
 }: {
   resource: LearningResource | null;
   onClose: () => void;
-  onSave: (note: string, fileSizeKB: number, fileName: string, newLinkUrl: string | null) => void | Promise<void>;
+  onSave: (note: string, fileName: string, newLinkUrl: string | null) => void | Promise<void>;
 }) {
   const [note, setNote] = useState<string>("");
   const [linkUrl, setLinkUrl] = useState<string>("");
@@ -611,7 +712,7 @@ function VersionDialog({
           <DialogTitle className="font-display text-lg">{resource.title}</DialogTitle>
         </DialogHeader>
 
-        <p className="text-[12px] text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           Current version <span className="font-mono text-ink">{resource.version}</span>.
           Replacing the link keeps the full version history for auditing.
         </p>
@@ -622,7 +723,7 @@ function VersionDialog({
               value={linkUrl}
               onChange={(event) => setLinkUrl(event.target.value)}
               placeholder={resource.linkUrl ?? resource.fileName}
-              className="h-9 rounded-sm text-[13px]"
+              className="h-9 rounded-sm text-[14px]"
             />
           </Field>
         </div>
@@ -634,7 +735,7 @@ function VersionDialog({
               onChange={(event) => setNote(event.target.value)}
               rows={3}
               placeholder="e.g. Corrected answer key on page 12; re-tagged to MATATAG CG."
-              className="rounded-sm text-[13px]"
+              className="rounded-sm text-[14px]"
             />
           </Field>
         </div>
@@ -643,7 +744,7 @@ function VersionDialog({
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring rounded-sm border border-border bg-card px-4 py-2 text-[13px] font-medium text-ink"
+            className="focus-ring rounded-sm border border-border bg-card px-4 py-2 text-[14px] font-medium text-ink"
           >
             Cancel
           </button>
@@ -655,13 +756,12 @@ function VersionDialog({
               Promise.resolve(
                 onSave(
                   note.trim() || "Replacement link submitted by the division administrator.",
-                  resource.fileSizeKB,
                   linkUrl.trim() || resource.fileName,
                   linkUrl.trim() || null,
                 ),
               ).finally(() => setBusy(false));
             }}
-            className="focus-ring rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
+            className="focus-ring rounded-sm bg-red px-4 py-2 text-[14px] font-semibold text-white disabled:opacity-60"
           >
             {busy ? "Saving…" : "Save new version"}
           </button>

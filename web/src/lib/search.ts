@@ -38,7 +38,7 @@ export function scoreResource(resource: LearningResource, query: string): number
   if (resource.id.toLowerCase().includes(q)) score += 70;
   if (resource.keywords.some((k) => k.toLowerCase().includes(q))) score += 34;
   if (resource.author.toLowerCase().includes(q)) score += 26;
-  if (resource.school.toLowerCase().includes(q)) score += 20;
+  if (resource.schools.some((s) => s.toLowerCase().includes(q))) score += 20;
   if (resource.learningCompetency.toLowerCase().includes(q)) score += 18;
   if (resource.description.toLowerCase().includes(q)) score += 10;
 
@@ -82,8 +82,8 @@ export function searchResources(
     if (filters.resourceType !== "any" && r.resourceType !== filters.resourceType) return false;
     if (filters.fileKind !== "any" && r.fileKind !== filters.fileKind) return false;
     if (filters.language !== "any" && r.language !== filters.language) return false;
-    if (filters.school !== "any" && r.school !== filters.school) return false;
-    if (filters.subOffice !== "any" && r.subOffice !== filters.subOffice) return false;
+    if (filters.school !== "any" && !r.schools.includes(filters.school)) return false;
+    if (filters.subOffice !== "any" && !r.subOffices.includes(filters.subOffice)) return false;
     if (filters.schoolYear !== "any" && r.schoolYear !== filters.schoolYear) return false;
     if (filters.author !== "any" && r.author !== filters.author) return false;
     if (
@@ -173,9 +173,9 @@ export function buildSuggestions(resources: LearningResource[], query: string, l
     .filter((r) => r.author.toLowerCase().includes(q))
     .forEach((r) => push({ label: r.author, hint: "Author", kind: "author" }));
 
-  published
-    .filter((r) => r.school.toLowerCase().includes(q))
-    .forEach((r) => push({ label: r.school, hint: "School", kind: "school" }));
+  published.forEach((r) => {
+    r.schools.filter((s) => s.toLowerCase().includes(q)).forEach((s) => push({ label: s, hint: "School", kind: "school" }));
+  });
 
   return out;
 }
@@ -191,7 +191,7 @@ export function relatedResources(resources: LearningResource[], resource: Learni
       if (r.learningArea === resource.learningArea) score += 14;
       if (r.gradeLevel === resource.gradeLevel) score += 12;
       if (r.quarter === resource.quarter) score += 6;
-      if (r.school === resource.school) score += 4;
+      if (r.schools.some((s) => resource.schools.includes(s))) score += 4;
       score += r.keywords.filter((k) => resource.keywords.includes(k)).length * 8;
       return { r, score };
     })

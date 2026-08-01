@@ -7,7 +7,7 @@ import {
   Bookmark,
   Check,
   ChevronRight,
-  Download,
+  ExternalLink,
   Eye,
   FolderPlus,
   History,
@@ -25,7 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { formatDate, formatDuration, formatNumber, formatRelative, formatSize } from "@/lib/format";
+import { formatDate, formatDuration, formatNumber, formatRelative } from "@/lib/format";
 import { FILE_KIND_LABEL } from "@/lib/taxonomy";
 import { resolvePublicUrl } from "@/lib/cloud";
 import { relatedResources } from "@/lib/search";
@@ -86,12 +86,12 @@ export default function ResourceDetail() {
       <PortalShell>
         <div className="container py-24 text-center">
           <h1 className="font-display text-2xl font-bold text-ink">Resource not found</h1>
-          <p className="mt-2 text-[13px] text-muted-foreground">
+          <p className="mt-2 text-[14px] text-muted-foreground">
             This learning resource may have been archived or deleted by the division administrator.
           </p>
           <Link
             to="/browse"
-            className="focus-ring mt-6 inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2 text-[13px] text-white"
+            className="focus-ring mt-6 inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2 text-[14px] text-white"
           >
             <ArrowLeft className="h-4 w-4" /> Back to catalog
           </Link>
@@ -103,58 +103,17 @@ export default function ResourceDetail() {
   const saved = bookmarks.includes(resource.id);
   const lastDownloaded = history.find((h) => h.resourceId === resource.id);
 
-  const handleDownload = async () => {
-    registerDownload(resource.id);
-    const publicUrl = resolvePublicUrl(resource.storagePath);
-    // When the file is persisted in Supabase Storage, download the real file;
-    // otherwise fall back to the manifest text so the flow always works.
-    if (publicUrl) {
-      try {
-        const link = document.createElement("a");
-        link.href = publicUrl;
-        link.download = resource.fileName;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("Download started", {
-          description: `${resource.fileName} · ${formatSize(resource.fileSizeKB)} · logged to download history.`,
-        });
-        return;
-      } catch (error) {
-        console.warn("LRMS: cloud download failed, falling back to manifest", error);
-      }
+  /** Opens the resource link in a new tab and logs the download. */
+  const handleOpenResource = () => {
+    const url = resource.linkUrl ?? resolvePublicUrl(resource.storagePath);
+    if (!url) {
+      toast.error("No resource link is available for this item.");
+      return;
     }
-    const manifest = [
-      `${resource.division}`,
-      `Learning Resource Management System — download manifest`,
-      "",
-      `Resource ID: ${resource.id}`,
-      `Title: ${resource.title}`,
-      `File: ${resource.fileName} (${FILE_KIND_LABEL[resource.fileKind]}, ${formatSize(resource.fileSizeKB)})`,
-      `Version: ${resource.version}`,
-      `Learning area: ${resource.learningArea} · ${resource.subject}`,
-      `Grade level: ${resource.gradeLevel} (${resource.keyStage})`,
-      `Quarter: ${resource.quarter}`,
-      `Competency: ${resource.competencyCode} — ${resource.learningCompetency}`,
-      `Reference: ${resource.melcReference}`,
-      `Author: ${resource.author}, ${resource.school}`,
-      `Sub-office: ${resource.subOffice}`,
-      `Copyright: ${resource.copyright}`,
-      `Downloaded: ${new Date().toLocaleString("en-PH")}`,
-    ].join("\n");
-    const blob = new Blob([manifest], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${resource.id}-${resource.fileName}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 1200);
-    toast.success("Download manifest saved", {
-      description: `${resource.fileName} · ${formatSize(resource.fileSizeKB)} · logged to download history.`,
+    registerDownload(resource.id);
+    window.open(url, "_blank", "noopener,noreferrer");
+    toast.success("Resource opened in a new tab", {
+      description: `${resource.fileName} · logged to download history.`,
     });
   };
 
@@ -184,13 +143,14 @@ export default function ResourceDetail() {
     ["MELC / CG reference", resource.melcReference],
     ["Resource type", resource.resourceType],
     ["File type", FILE_KIND_LABEL[resource.fileKind]],
-    ["File size", formatSize(resource.fileSizeKB)],
-    resource.durationSec > 0 ? ["Duration", formatDuration(resource.durationSec)] : ["Pages", `${resource.pages}`],
+    resource.durationSec > 0
+      ? ["Duration", formatDuration(resource.durationSec)]
+      : ["Number of pages", `${resource.pages}`],
     ["Language", resource.language],
     ["Version", resource.version],
     ["Author", resource.author],
-    ["School", resource.school],
-    ["District / Sub-office", resource.subOffice],
+    ["Schools", resource.schools.join(", ") || "—"],
+    ["Sub-offices", resource.subOffices.join(", ") || "—"],
     ["Division", resource.division],
     ["Publisher", resource.publisher],
     ["Copyright", resource.copyright],
@@ -203,7 +163,7 @@ export default function ResourceDetail() {
   return (
     <PortalShell>
       <div className="border-b border-border/80 bg-muted/40">
-        <div className="container flex items-center gap-2 py-3 text-[11px] text-muted-foreground">
+        <div className="container flex items-center gap-2 py-3 text-[12px] text-muted-foreground">
           <Link to="/" className="hover:text-red-dark">
             Home
           </Link>
@@ -233,10 +193,10 @@ export default function ResourceDetail() {
             {resource.title}
           </h1>
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-muted-foreground">
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-muted-foreground">
             <StarRating value={rating.average} count={rating.count} />
             <span className="tabular inline-flex items-center gap-1">
-              <Download className="h-3.5 w-3.5" /> {formatNumber(resource.downloads)} downloads
+              <ExternalLink className="h-3.5 w-3.5" /> {formatNumber(resource.downloads)} downloads
             </span>
             <span className="tabular inline-flex items-center gap-1">
               <Eye className="h-3.5 w-3.5" /> {formatNumber(resource.views)} views
@@ -244,22 +204,22 @@ export default function ResourceDetail() {
             <span>Uploaded {formatRelative(resource.dateUploaded)}</span>
           </div>
 
-          <p className="mt-5 max-w-3xl text-[14px] leading-relaxed text-ink">{resource.description}</p>
+          <p className="mt-5 max-w-3xl text-[15px] leading-relaxed text-ink">{resource.description}</p>
 
           <div className="plate mt-6 border-l-2 border-l-red p-4">
             <Eyebrow className="text-red-dark">Learning competency · {resource.competencyCode}</Eyebrow>
-            <p className="mt-2 text-[14px] leading-relaxed text-ink">{resource.learningCompetency}</p>
-            <p className="mt-2 font-mono text-[11px] text-muted-foreground">Reference: {resource.melcReference}</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-ink">{resource.learningCompetency}</p>
+            <p className="mt-2 font-mono text-[12px] text-muted-foreground">Reference: {resource.melcReference}</p>
           </div>
 
           {/* Actions */}
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => void handleDownload()}
-              className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-5 py-2.5 text-[13px] font-semibold text-white transition-all hover:bg-red-dark active:scale-[0.98]"
+              onClick={() => void handleOpenResource()}
+              className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-5 py-2.5 text-[14px] font-semibold text-white transition-all hover:bg-red-dark active:scale-[0.98]"
             >
-              <Download className="h-4 w-4" strokeWidth={2} /> {resource.linkUrl ? "Open resource link" : `Download ${resource.fileKind.toUpperCase()}`}{!resource.linkUrl && resource.fileSizeKB > 0 ? ` · ${formatSize(resource.fileSizeKB)}` : ""}
+              <ExternalLink className="h-4 w-4" strokeWidth={2} /> Open resource
             </button>
             <button
               type="button"
@@ -268,7 +228,7 @@ export default function ResourceDetail() {
                 toast.success(saved ? "Removed from favorites" : "Saved to My Library");
               }}
               className={cn(
-                "focus-ring inline-flex items-center gap-2 rounded-sm border px-4 py-2.5 text-[13px] font-medium transition-colors",
+                "focus-ring inline-flex items-center gap-2 rounded-sm border px-4 py-2.5 text-[14px] font-medium transition-colors",
                 saved ? "border-red bg-red/15 text-red-dark" : "border-red/25 bg-card text-ink hover:border-red",
               )}
             >
@@ -279,7 +239,7 @@ export default function ResourceDetail() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-4 py-2.5 text-[13px] font-medium text-ink hover:border-red"
+                  className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-4 py-2.5 text-[14px] font-medium text-ink hover:border-red"
                 >
                   <FolderPlus className="h-4 w-4" /> Add to collection
                 </button>
@@ -288,7 +248,7 @@ export default function ResourceDetail() {
                 <p className="eyebrow border-b border-border bg-muted/60 px-3 py-2 text-ink">My collections</p>
                 <ul className="max-h-56 overflow-y-auto p-1">
                   {collections.length === 0 && (
-                    <li className="px-3 py-3 text-[12px] text-muted-foreground">No collections yet.</li>
+                    <li className="px-3 py-3 text-[13px] text-muted-foreground">No collections yet.</li>
                   )}
                   {collections.map((collection) => {
                     const inside = collection.resourceIds.includes(resource.id);
@@ -300,7 +260,7 @@ export default function ResourceDetail() {
                             toggleInCollection(collection.id, resource.id);
                             toast.success(inside ? `Removed from ${collection.name}` : `Added to ${collection.name}`);
                           }}
-                          className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-[13px] text-ink hover:bg-muted"
+                          className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-[14px] text-ink hover:bg-muted"
                         >
                           <span
                             className={cn(
@@ -321,7 +281,7 @@ export default function ResourceDetail() {
                     value={newCollection}
                     onChange={(event) => setNewCollection(event.target.value)}
                     placeholder="New collection name"
-                    className="h-8 rounded-sm text-[12px]"
+                    className="h-8 rounded-sm text-[13px]"
                   />
                   <button
                     type="button"
@@ -332,7 +292,7 @@ export default function ResourceDetail() {
                       setNewCollection("");
                       toast.success("Collection created");
                     }}
-                    className="focus-ring shrink-0 rounded-sm bg-red px-2.5 text-[12px] font-medium text-white"
+                    className="focus-ring shrink-0 rounded-sm bg-red px-2.5 text-[13px] font-medium text-white"
                   >
                     Add
                   </button>
@@ -348,21 +308,21 @@ export default function ResourceDetail() {
                   .then(() => toast.success("Permalink copied to clipboard"))
                   .catch(() => toast.error("Could not copy the link"));
               }}
-              className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-4 py-2.5 text-[13px] font-medium text-ink hover:border-red"
+              className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-4 py-2.5 text-[14px] font-medium text-ink hover:border-red"
             >
               <Share2 className="h-4 w-4" /> Share
             </button>
           </div>
 
           {lastDownloaded && (
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              You last downloaded this resource {formatRelative(lastDownloaded.at)}.
+            <p className="mt-3 text-[12px] text-muted-foreground">
+              You last opened this resource {formatRelative(lastDownloaded.at)}.
             </p>
           )}
 
           {/* Preview */}
           <div className="mt-8">
-            <Eyebrow className="text-red-dark">Preview without downloading</Eyebrow>
+            <Eyebrow className="text-red-dark">Resource preview</Eyebrow>
             <div className="plate mt-2 overflow-hidden">
               <PreviewViewer resource={resource} />
             </div>
@@ -383,7 +343,7 @@ export default function ResourceDetail() {
                       type="button"
                       onClick={() => setTab(item.key)}
                       className={cn(
-                        "inline-flex items-center gap-2 px-4 py-3 text-[12px] font-medium transition-colors",
+                        "inline-flex items-center gap-2 px-4 py-3 text-[13px] font-medium transition-colors",
                         tab === item.key
                           ? "border-b-2 border-red bg-card text-ink"
                           : "text-muted-foreground hover:text-ink",
@@ -395,10 +355,10 @@ export default function ResourceDetail() {
                 })}
               </div>
               <div className="space-y-3 p-4">
-                <p className="text-[12px] text-muted-foreground">{FEEDBACK_TABS.find((t) => t.key === tab)?.hint}</p>
+                <p className="text-[13px] text-muted-foreground">{FEEDBACK_TABS.find((t) => t.key === tab)?.hint}</p>
                 {tab === "review" && (
                   <div className="flex items-center gap-3">
-                    <span className="text-[12px] font-medium text-ink">Your rating</span>
+                    <span className="text-[13px] font-medium text-ink">Your rating</span>
                     <StarRating value={stars} size={22} onSelect={setStars} />
                   </div>
                 )}
@@ -406,7 +366,7 @@ export default function ResourceDetail() {
                   value={author}
                   onChange={(event) => setAuthor(event.target.value)}
                   placeholder="Your name and school (optional)"
-                  className="h-9 rounded-sm text-[13px]"
+                  className="h-9 rounded-sm text-[14px]"
                 />
                 <Textarea
                   value={comment}
@@ -419,13 +379,13 @@ export default function ResourceDetail() {
                         ? "What would make this resource more usable?"
                         : "How did this resource help your learners?"
                   }
-                  className="rounded-sm text-[13px]"
+                  className="rounded-sm text-[14px]"
                 />
                 <div className="flex justify-end">
                   <button
                     type="button"
                     onClick={submitFeedback}
-                    className="focus-ring rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white transition-transform active:scale-[0.98]"
+                    className="focus-ring rounded-sm bg-red px-4 py-2 text-[14px] font-semibold text-white transition-transform active:scale-[0.98]"
                   >
                     Submit {tab === "review" ? "review" : tab === "issue" ? "report" : "recommendation"}
                   </button>
@@ -435,7 +395,7 @@ export default function ResourceDetail() {
 
             <ul className="mt-5 space-y-3">
               {reviews.length === 0 && (
-                <li className="plate px-4 py-6 text-center text-[13px] text-muted-foreground">
+                <li className="plate px-4 py-6 text-center text-[14px] text-muted-foreground">
                   No feedback yet — be the first to review this resource.
                 </li>
               )}
@@ -452,17 +412,17 @@ export default function ResourceDetail() {
                           .slice(0, 2)
                           .toUpperCase()}
                       </span>
-                      <span className="text-[13px] font-semibold text-ink">{item.author}</span>
+                      <span className="text-[14px] font-semibold text-ink">{item.author}</span>
                       {item.kind !== "review" && (
                         <MetaChip tone="red">{item.kind === "issue" ? "Reported issue" : "Recommendation"}</MetaChip>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       {item.stars > 0 && <StarRating value={item.stars} size={12} />}
-                      <span className="text-[11px] text-muted-foreground">{formatRelative(item.createdAt)}</span>
+                      <span className="text-[12px] text-muted-foreground">{formatRelative(item.createdAt)}</span>
                     </div>
                   </div>
-                  <p className="mt-2 flex gap-2 text-[13px] leading-relaxed text-ink">
+                  <p className="mt-2 flex gap-2 text-[14px] leading-relaxed text-ink">
                     <MessageSquareQuote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-dark" />
                     {item.comment}
                   </p>
@@ -480,11 +440,11 @@ export default function ResourceDetail() {
             </p>
             <dl className="divide-y divide-border/60">
               {metadata.map(([label, value]) => (
-                <div key={label} className="grid grid-cols-[128px_1fr] gap-3 px-4 py-2">
-                  <dt className="text-[11px] uppercase tracking-[0.06em] text-muted-foreground">{label}</dt>
+                <div key={label} className="grid grid-cols-[140px_1fr] gap-3 px-4 py-2.5">
+                  <dt className="text-[12px] uppercase tracking-[0.06em] text-muted-foreground">{label}</dt>
                   <dd
                     className={cn(
-                      "text-[12.5px] leading-snug text-ink",
+                      "text-[13.5px] leading-snug text-ink",
                       (label === "Resource ID" || label === "Competency code") && "font-mono",
                       label === "Status" && "capitalize",
                     )}
@@ -501,7 +461,7 @@ export default function ResourceDetail() {
                   <Link
                     key={keyword}
                     to={`/browse?q=${encodeURIComponent(keyword)}`}
-                    className="focus-ring rounded-sm bg-muted px-2 py-0.5 text-[11px] text-ink transition-colors hover:bg-red/20 hover:text-red-dark"
+                    className="focus-ring rounded-sm bg-muted px-2 py-0.5 text-[12px] text-ink transition-colors hover:bg-red/20 hover:text-red-dark"
                   >
                     #{keyword}
                   </Link>
@@ -527,12 +487,12 @@ export default function ResourceDetail() {
                     <span className="absolute left-[5px] top-4 h-full w-px bg-border" />
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[12px] font-semibold text-ink">{version.version}</span>
+                    <span className="font-mono text-[13px] font-semibold text-ink">{version.version}</span>
                     {i === 0 && <MetaChip tone="red">Current</MetaChip>}
                   </div>
-                  <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{version.note}</p>
-                  <p className="tabular mt-0.5 text-[11px] text-muted-foreground/80">
-                    {formatDate(version.uploadedAt)} · {formatSize(version.fileSizeKB)}
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{version.note}</p>
+                  <p className="tabular mt-0.5 text-[12px] text-muted-foreground/80">
+                    {formatDate(version.uploadedAt)}
                   </p>
                 </li>
               ))}

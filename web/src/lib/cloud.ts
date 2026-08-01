@@ -50,8 +50,20 @@ function asNotificationKind(value: string): NotificationKind {
   return (kinds.includes(value as NotificationKind) ? value : "system") as NotificationKind;
 }
 
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value as string[];
+  if (typeof value === "string" && value.length > 0) return [value];
+  return [];
+}
+
 export function rowToResource(row: ResourceRow): LearningResource {
   const versions = Array.isArray(row.versions) ? (row.versions as unknown as ResourceVersion[]) : [];
+  // Handle both legacy single-value columns and new array columns
+  const rawSchools = (row as Record<string, unknown>).schools;
+  const rawSubOffices = (row as Record<string, unknown>).sub_offices;
+  const legacySchool = typeof row.school === "string" ? row.school : "";
+  const legacySubOffice = typeof row.sub_office === "string" ? row.sub_office : "";
+
   return {
     id: row.id,
     title: row.title,
@@ -68,13 +80,12 @@ export function rowToResource(row: ResourceRow): LearningResource {
     resourceType: row.resource_type,
     fileKind: asKind(row.file_kind),
     fileName: row.file_name,
-    fileSizeKB: row.file_size_kb,
     pages: row.pages,
     durationSec: row.duration_sec,
     language: row.language,
     author: row.author,
-    school: row.school ?? "",
-    subOffice: row.sub_office ?? "",
+    schools: asStringArray(rawSchools).length > 0 ? asStringArray(rawSchools) : legacySchool ? [legacySchool] : [],
+    subOffices: asStringArray(rawSubOffices).length > 0 ? asStringArray(rawSubOffices) : legacySubOffice ? [legacySubOffice] : [],
     division: row.division ?? "",
     publisher: row.publisher ?? "",
     copyright: row.copyright ?? "",
@@ -110,13 +121,12 @@ export function resourceToInsert(resource: LearningResource): ResourceInsert {
     resource_type: resource.resourceType,
     file_kind: resource.fileKind,
     file_name: resource.fileName,
-    file_size_kb: resource.fileSizeKB,
     pages: resource.pages,
     duration_sec: resource.durationSec,
     language: resource.language,
     author: resource.author,
-    school: resource.school,
-    sub_office: resource.subOffice,
+    schools: resource.schools,
+    sub_offices: resource.subOffices,
     division: resource.division,
     publisher: resource.publisher,
     copyright: resource.copyright,
@@ -148,12 +158,16 @@ function rowToFeedback(row: FeedbackRow): Feedback {
 }
 
 function rowToDownloadEvent(row: DownloadEventRow): DownloadEvent {
+  const rawSchools = (row as Record<string, unknown>).schools;
+  const rawSubOffices = (row as Record<string, unknown>).sub_offices;
+  const legacySchool = typeof row.school === "string" ? row.school : "";
+  const legacySubOffice = typeof row.sub_office === "string" ? row.sub_office : "";
   return {
     id: row.id,
     resourceId: row.resource_id,
     at: row.at,
-    subOffice: row.sub_office,
-    school: row.school,
+    subOffices: asStringArray(rawSubOffices).length > 0 ? asStringArray(rawSubOffices) : legacySubOffice ? [legacySubOffice] : [],
+    schools: asStringArray(rawSchools).length > 0 ? asStringArray(rawSchools) : legacySchool ? [legacySchool] : [],
   };
 }
 
@@ -313,8 +327,8 @@ export async function insertCloudDownloadEvent(event: DownloadEvent): Promise<vo
     id: event.id,
     resource_id: event.resourceId,
     at: event.at,
-    sub_office: event.subOffice,
-    school: event.school,
+    sub_offices: event.subOffices,
+    schools: event.schools,
   });
   if (error) console.warn("LRMS cloud: insert download_event failed", error.message);
 }
@@ -407,58 +421,12 @@ export async function seedCloudIfEmpty(resources: LearningResource[]): Promise<v
 /* --------------------------------- storage ------------------------------------ */
 
 /**
- * Upload a learning resource file to the public `resources` bucket.
- * Returns the storage path (bucket-relative) and the public URL.
+ * Resolve a resource's public download URL from its storage path.
  */
-export async function uploadResourceFile(
-  resource: LearningResource,
-  file: File,
-): Promise<{ path: string; publicUrl: string } | null> {
-  if (!supabase) return null;
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const path = `${resource.id}/${resource.version}-${resource.fileName.replace(/\s+/g, "-")}.${ext}`;
-  const { error } = await supabase.storage.from(RESOURCES_BUCKET).upload(path, file, {
-    upsert: true,
-    cacheControl: "3600",
-  });
-  if (error) {
-    console.warn("LRMS storage: upload failed", error.message);
-    return null;
-  }
-  const { data: publicUrlData } = supabase.storage.from(RESOURCES_BUCKET).getPublicUrl(path);
-  return { path, publicUrl: publicUrlData.publicUrl };
-}
-
-/**
- * Upload a replacement version file for an existing resource.
- */
-export async function uploadVersionFile(
-  resourceId: string,
-  versionLabel: string,
-  file: File,
-): Promise<{ path: string; publicUrl: string } | null> {
-  if (!supabase) return null;
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const path = `${resourceId}/${versionLabel}-${file.name.replace(/\s+/g, "-")}.${ext}`;
-  const { error } = await supabase.storage.from(RESOURCES_BUCKET).upload(path, file, {
-    upsert: true,
-    cacheControl: "3600",
-  });
-  if (error) {
-    console.warn("LRMS storage: version upload failed", error.message);
-    return null;
-  }
-  const { data: publicUrlData } = supabase.storage.from(RESOURCES_BUCKET).getPublicUrl(path);
-  return { path, publicUrl: publicUrlData.publicUrl };
-}
-
-/**
- * Remove a storage object when a resource is deleted.
- */
-export async function removeResourceFile(storagePath: string | null): Promise<void> {
-  if (!supabase || !storagePath) return;
-  const { error } = await supabase.storage.from(RESOURCES_BUCKET).remove([storagePath]);
-  if (error) console.warn("LRMS storage: remove failed", error.message);
+export function resolvePublicUrl(storagePath: string | null): string | null {
+  if (!supabase || !storagePath) return null;
+  const { data } = supabase.storage.from(RESOURCES_BUCKET).getPublicUrl(storagePath);
+  return data.publicUrl ?? null;
 }
 
 /**
@@ -475,15 +443,6 @@ export async function removeResourceFolder(resourceId: string): Promise<void> {
   if (paths.length === 0) return;
   const { error: removeError } = await supabase.storage.from(RESOURCES_BUCKET).remove(paths);
   if (removeError) console.warn("LRMS storage: remove folder failed", removeError.message);
-}
-
-/**
- * Resolve a resource's public download URL from its storage path.
- */
-export function resolvePublicUrl(storagePath: string | null): string | null {
-  if (!supabase || !storagePath) return null;
-  const { data } = supabase.storage.from(RESOURCES_BUCKET).getPublicUrl(storagePath);
-  return data.publicUrl ?? null;
 }
 
 export { isSupabaseConfigured };
