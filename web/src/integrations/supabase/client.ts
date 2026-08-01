@@ -13,8 +13,8 @@ import type { Database } from "./types";
  * Realtime is enabled so updates made in one browser are delivered instantly to
  * every other browser or device viewing the portal.
  */
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const supabaseUrl = (import.meta.env.EXPO_PUBLIC_SUPABASE_URL ?? import.meta.env.VITE_SUPABASE_URL) as string | undefined;
+const supabaseAnonKey = (import.meta.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
