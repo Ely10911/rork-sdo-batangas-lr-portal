@@ -18,16 +18,16 @@ function DivisionSeal({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gold/60 bg-ink-deep",
+        "relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-red/60 bg-red-deep",
         className,
       )}
       aria-hidden
     >
-      <span className="absolute inset-[3px] rounded-full border border-gold/25" />
-      <svg viewBox="0 0 24 24" className="h-5 w-5 text-gold" fill="none" strokeWidth={1.6} stroke="currentColor">
+      <span className="absolute inset-[3px] rounded-full border border-red/25" />
+      <svg viewBox="0 0 24 24" className="h-5 w-5 text-red" fill="none" strokeWidth={1.6} stroke="currentColor">
         <path d="M4 18.5V6.2c2.6-1 5.4-1 8 .3 2.6-1.3 5.4-1.3 8-.3v12.3c-2.6-1-5.4-1-8 .3-2.6-1.3-5.4-1.3-8-.3Z" />
         <path d="M12 6.5V19" />
-        <path d="m7.4 13.6 2.1-2.6 1.5 1.8" className="text-gold-soft" />
+        <path d="m7.4 13.6 2.1-2.6 1.5 1.8" className="text-red-soft" />
       </svg>
     </span>
   );
@@ -43,7 +43,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Republic banner */}
-      <div className="ink-panel border-b border-ink-soft/40 text-parchment/70">
+      <div className="red-panel border-b border-red-dark/40 text-white/70">
         <div className="container flex flex-wrap items-center justify-between gap-2 py-1.5">
           <p className="eyebrow">Republic of the Philippines · Department of Education · Region IV-A CALABARZON</p>
           <p className="eyebrow hidden sm:block">
@@ -75,14 +75,14 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
                   className={({ isActive }) =>
                     cn(
                       "focus-ring inline-flex items-center gap-2 rounded-sm px-3 py-2 text-[13px] font-medium transition-colors",
-                      isActive ? "bg-ink text-parchment" : "text-ink-soft hover:bg-muted",
+                      isActive ? "bg-red text-white" : "text-ink hover:bg-muted",
                     )
                   }
                 >
                   <Icon className="h-4 w-4" strokeWidth={1.8} />
                   {item.label}
                   {item.to === "/library" && bookmarks.length > 0 && (
-                    <span className="tabular rounded-full bg-gold/25 px-1.5 text-[10px] font-bold text-gold-deep">
+                    <span className="tabular rounded-full bg-red/25 px-1.5 text-[10px] font-bold text-red-dark">
                       {bookmarks.length}
                     </span>
                   )}
@@ -97,7 +97,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
               <>
                 <Link
                   to="/admin"
-                  className="focus-ring inline-flex items-center gap-2 rounded-sm bg-gold px-3 py-2 text-[13px] font-semibold text-ink-deep transition-colors hover:bg-gold-soft"
+                  className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-3 py-2 text-[13px] font-semibold text-red-deep transition-colors hover:bg-red-soft"
                 >
                   <LayoutDashboard className="h-4 w-4" strokeWidth={2} />
                   <span className="hidden sm:inline">Admin console</span>
@@ -106,7 +106,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={logout}
                   aria-label="Sign out"
-                  className="focus-ring grid h-9 w-9 place-items-center rounded-sm border border-border bg-card text-ink-soft hover:border-destructive/60 hover:text-destructive"
+                  className="focus-ring grid h-9 w-9 place-items-center rounded-sm border border-border bg-card text-ink hover:border-destructive/60 hover:text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
                 </button>
@@ -115,7 +115,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
               <Link
                 to="/login"
                 state={{ from: location.pathname }}
-                className="focus-ring inline-flex items-center gap-2 rounded-sm border border-ink/25 bg-card px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:border-gold hover:text-gold-deep"
+                className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:border-red hover:text-red-dark"
               >
                 <ShieldCheck className="h-4 w-4" strokeWidth={1.8} />
                 <span className="hidden sm:inline">Administrator login</span>
@@ -134,7 +134,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
               className={({ isActive }) =>
                 cn(
                   "whitespace-nowrap rounded-sm px-3 py-1.5 text-[12px] font-medium",
-                  isActive ? "bg-ink text-parchment" : "text-ink-soft hover:bg-muted",
+                  isActive ? "bg-red text-white" : "text-ink hover:bg-muted",
                 )
               }
             >
@@ -146,40 +146,40 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="ink-panel mt-16 text-parchment/70">
+      <footer className="red-panel mt-16 text-white/70">
         <div className="container grid gap-8 py-12 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
               <DivisionSeal />
-              <span className="font-display text-lg font-bold text-parchment">Learning Resource Portal</span>
+              <span className="font-display text-lg font-bold text-white">Learning Resource Portal</span>
             </div>
             <p className="mt-4 max-w-md text-[13px] leading-relaxed">
               The official Learning Resource Management System of the {DIVISION}. Quality-assured, contextualized and
               curriculum-aligned materials for every learner in the province.
             </p>
-            <p className="mt-4 text-[12px] text-parchment/45">
+            <p className="mt-4 text-[12px] text-white/45">
               Kumintang Ibaba, Batangas City, Batangas · (043) 722-1234 · batangas.province@deped.gov.ph
             </p>
           </div>
           <div>
-            <p className="eyebrow text-gold-soft">Portal</p>
+            <p className="eyebrow text-red-soft">Portal</p>
             <ul className="mt-3 space-y-2 text-[13px]">
               {NAV.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} className="transition-colors hover:text-gold-soft">
+                  <Link to={item.to} className="transition-colors hover:text-red-soft">
                     {item.label}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link to="/login" className="transition-colors hover:text-gold-soft">
+                <Link to="/login" className="transition-colors hover:text-red-soft">
                   Administrator login
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <p className="eyebrow text-gold-soft">Governance</p>
+            <p className="eyebrow text-red-soft">Governance</p>
             <ul className="mt-3 space-y-2 text-[13px]">
               <li>Curriculum Implementation Division</li>
               <li>Learning Resource Management Section</li>
@@ -188,8 +188,8 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
             </ul>
           </div>
         </div>
-        <div className="border-t border-parchment/10">
-          <div className="container flex flex-wrap items-center justify-between gap-2 py-4 text-[11px] text-parchment/45">
+        <div className="border-t border-white/10">
+          <div className="container flex flex-wrap items-center justify-between gap-2 py-4 text-[11px] text-white/45">
             <span>© {new Date().getFullYear()} Schools Division Office of Batangas. All rights reserved.</span>
             <span>LRMS v2.6 · Learning Resource Portal</span>
           </div>

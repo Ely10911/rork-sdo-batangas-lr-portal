@@ -31,10 +31,10 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
       aria-label={saved ? "Remove from favorites" : "Save to favorites"}
       className={cn(
         "focus-ring grid h-8 w-8 shrink-0 place-items-center rounded-sm border transition-colors",
-        saved ? "border-gold bg-gold/20 text-gold-deep" : "border-border bg-background/60 text-muted-foreground hover:border-gold/60 hover:text-gold-deep",
+        saved ? "border-red bg-red/20 text-red-dark" : "border-border bg-background/60 text-muted-foreground hover:border-red/60 hover:text-red-dark",
       )}
     >
-      <Bookmark className={cn("h-4 w-4", saved && "fill-gold text-gold-deep")} strokeWidth={1.8} />
+      <Bookmark className={cn("h-4 w-4", saved && "fill-red text-red-dark")} strokeWidth={1.8} />
     </button>
   );
 
@@ -42,7 +42,7 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
     return (
       <Link
         to={`/resource/${resource.id}`}
-        className="group flex items-start gap-4 border-b border-border/70 px-4 py-4 transition-colors last:border-b-0 hover:bg-gold/5"
+        className="group flex items-start gap-4 border-b border-border/70 px-4 py-4 transition-colors last:border-b-0 hover:bg-red/5"
       >
         <div className="mt-0.5 flex flex-col items-center gap-2">
           <FileKindTag kind={resource.fileKind} />
@@ -52,7 +52,7 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
             <span className="font-mono text-[10px] tracking-[0.14em] text-muted-foreground">{resource.id}</span>
             {showStatus && <StatusPill status={resource.status} />}
           </div>
-          <h3 className="mt-1 truncate font-display text-base font-semibold text-ink group-hover:text-gold-deep">
+          <h3 className="mt-1 truncate font-display text-base font-semibold text-ink group-hover:text-red-dark">
             {resource.title}
           </h3>
           <p className="mt-1 line-clamp-1 text-[13px] text-muted-foreground">
@@ -81,7 +81,7 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
         <div className="relative flex flex-wrap items-center gap-2">
           <FileKindTag kind={resource.fileKind} />
           <MetaChip tone="ink">{resource.quarter.replace("Quarter", "Q")}</MetaChip>
-          {resource.featured && <MetaChip tone="gold">Featured</MetaChip>}
+          {resource.featured && <MetaChip tone="red">Featured</MetaChip>}
         </div>
         <div className="relative">{bookmarkButton}</div>
       </div>
@@ -90,7 +90,7 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
         <span className="font-mono text-[10px] tracking-[0.14em] text-muted-foreground">
           {resource.id} · {resource.competencyCode}
         </span>
-        <h3 className="mt-1.5 line-clamp-2 font-display text-[17px] font-semibold leading-snug text-ink transition-colors group-hover:text-gold-deep">
+        <h3 className="mt-1.5 line-clamp-2 font-display text-[17px] font-semibold leading-snug text-ink transition-colors group-hover:text-red-dark">
           {resource.title}
         </h3>
         <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">{resource.learningCompetency}</p>

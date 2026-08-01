@@ -27,13 +27,13 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
           className={cn(
             "focus-ring relative grid h-9 w-9 place-items-center rounded-sm border transition-colors",
             tone === "light"
-              ? "border-parchment/20 bg-parchment/5 text-parchment hover:border-gold/60"
-              : "border-border bg-card text-ink hover:border-gold/60",
+              ? "border-white/20 bg-white/5 text-white hover:border-red/60"
+              : "border-border bg-card text-ink hover:border-red/60",
           )}
         >
           <BellRing className="h-4 w-4" strokeWidth={1.8} />
           {unread > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 animate-pulse-dot place-items-center rounded-full bg-gold px-1 text-[9px] font-bold text-ink-deep">
+            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 animate-pulse-dot place-items-center rounded-full bg-red px-1 text-[9px] font-bold text-red-deep">
               {unread}
             </span>
           )}
@@ -41,11 +41,11 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[360px] overflow-hidden rounded-md border-border p-0">
         <div className="flex items-center justify-between border-b border-border bg-muted/60 px-4 py-2.5">
-          <p className="eyebrow text-ink-soft">In-app notifications</p>
+          <p className="eyebrow text-ink">In-app notifications</p>
           <button
             type="button"
             onClick={markAllNotificationsRead}
-            className="focus-ring rounded-sm text-[11px] font-medium text-gold-deep hover:underline"
+            className="focus-ring rounded-sm text-[11px] font-medium text-red-dark hover:underline"
           >
             Mark all read
           </button>
@@ -57,15 +57,15 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
           {notifications.map((note) => {
             const Icon = KIND_ICON[note.kind];
             const inner = (
-              <div className={cn("flex gap-3 px-4 py-3 transition-colors hover:bg-gold/6", !note.read && "bg-gold/8")}>
+              <div className={cn("flex gap-3 px-4 py-3 transition-colors hover:bg-red/6", !note.read && "bg-red/8")}>
                 <span
                   className={cn(
                     "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-sm border",
                     note.kind === "curriculum"
-                      ? "border-gold/50 bg-gold/15 text-gold-deep"
+                      ? "border-red/50 bg-red/15 text-red-dark"
                       : note.kind === "system"
-                        ? "border-verdigris/40 bg-verdigris/10 text-verdigris"
-                        : "border-border bg-muted text-ink-soft",
+                        ? "border-red-soft/40 bg-red-soft/10 text-red-soft"
+                        : "border-border bg-muted text-ink",
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" strokeWidth={1.9} />
@@ -77,7 +77,7 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
                     {formatRelative(note.at)}
                   </p>
                 </div>
-                {!note.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />}
+                {!note.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red" />}
               </div>
             );
             return (

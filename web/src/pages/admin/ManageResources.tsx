@@ -20,10 +20,10 @@ import {
   RESOURCE_TYPES,
   SCHOOL_NAMES,
   SCHOOL_YEARS,
+  SUB_OFFICE_NAMES,
   keyStageFor,
   subOfficeFor,
 } from "@/lib/taxonomy";
-import { uploadVersionFile } from "@/lib/cloud";
 import { useLrms } from "@/lib/store";
 import type { LearningResource, Quarter, ResourceStatus } from "@/lib/types";
 
@@ -128,27 +128,27 @@ export default function ManageResources() {
       </div>
 
       {selected.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-gold/50 bg-gold/12 px-4 py-3">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-red/50 bg-red/12 px-4 py-3">
           <span className="text-[13px] font-semibold text-ink">{selected.length} selected</span>
           <div className="ml-auto flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => bulk("published")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-ink px-3 py-1.5 text-[12px] font-medium text-parchment"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-red px-3 py-1.5 text-[12px] font-medium text-white"
             >
               <CheckCircle2 className="h-3.5 w-3.5" /> Publish
             </button>
             <button
               type="button"
               onClick={() => bulk("pending")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-ink/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink"
             >
               <Send className="h-3.5 w-3.5" /> Send to QA
             </button>
             <button
               type="button"
               onClick={() => bulk("archived")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-ink/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[12px] font-medium text-ink"
             >
               <Archive className="h-3.5 w-3.5" /> Archive
             </button>
@@ -174,14 +174,14 @@ export default function ManageResources() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-border bg-ink text-parchment">
+              <tr className="border-b border-border bg-red text-white">
                 <th className="w-10 px-3 py-2.5">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={() => setSelected(allSelected ? [] : rows.map((r) => r.id))}
                     aria-label="Select all resources"
-                    className="h-3.5 w-3.5 accent-gold"
+                    className="h-3.5 w-3.5 accent-red"
                   />
                 </th>
                 {["Resource", "Classification", "File", "Status", "Usage", "Actions"].map((head) => (
@@ -193,7 +193,7 @@ export default function ManageResources() {
             </thead>
             <tbody>
               {rows.map((resource) => (
-                <tr key={resource.id} className="border-b border-border/60 align-top transition-colors hover:bg-gold/5">
+                <tr key={resource.id} className="border-b border-border/60 align-top transition-colors hover:bg-red/5">
                   <td className="px-3 py-3">
                     <input
                       type="checkbox"
@@ -204,11 +204,11 @@ export default function ManageResources() {
                         )
                       }
                       aria-label={`Select ${resource.title}`}
-                      className="h-3.5 w-3.5 accent-gold"
+                      className="h-3.5 w-3.5 accent-red"
                     />
                   </td>
                   <td className="max-w-[320px] px-3 py-3">
-                    <Link to={`/resource/${resource.id}`} className="block truncate text-[13px] font-semibold text-ink hover:text-gold-deep">
+                    <Link to={`/resource/${resource.id}`} className="block truncate text-[13px] font-semibold text-ink hover:text-red-dark">
                       {resource.title}
                     </Link>
                     <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
@@ -218,7 +218,7 @@ export default function ManageResources() {
                       {resource.author} · {resource.school}
                     </p>
                   </td>
-                  <td className="px-3 py-3 text-[12px] text-ink-soft">
+                  <td className="px-3 py-3 text-[12px] text-ink">
                     <p>
                       {resource.gradeLevel} · {resource.learningArea}
                     </p>
@@ -235,7 +235,7 @@ export default function ManageResources() {
                   <td className="px-3 py-3">
                     <StatusPill status={resource.status} />
                   </td>
-                  <td className="tabular px-3 py-3 text-[12px] text-ink-soft">
+                  <td className="tabular px-3 py-3 text-[12px] text-ink">
                     <p>{formatNumber(resource.downloads)} downloads</p>
                     <p className="text-[11px] text-muted-foreground">{formatNumber(resource.views)} views</p>
                   </td>
@@ -301,24 +301,21 @@ export default function ManageResources() {
       <VersionDialog
         resource={versioning}
         onClose={() => setVersioning(null)}
-        onSave={async (note, fileSizeKB, fileName, replacementFile) => {
+        onSave={async (note, fileSizeKB, fileName, newLinkUrl) => {
           if (!versioning) return;
           const minor = versioning.versions.length;
           const versionLabel = `v1.${minor}`;
-          let storagePath: string | undefined;
-          if (replacementFile) {
-            const uploaded = await uploadVersionFile(versioning.id, versionLabel, replacementFile);
-            if (uploaded) storagePath = uploaded.path;
-          }
           addVersion(versioning.id, {
             version: versionLabel,
             fileName,
             fileSizeKB,
             uploadedAt: new Date().toISOString(),
             note,
-            storagePath,
           });
-          toast.success(`Version ${versionLabel} uploaded and set as current`);
+          if (newLinkUrl) {
+            updateResource(versioning.id, { linkUrl: newLinkUrl, fileName: newLinkUrl });
+          }
+          toast.success(`Version ${versionLabel} set as current`);
           setVersioning(null);
         }}
       />
@@ -347,7 +344,7 @@ function IconAction({
         "focus-ring grid h-7 w-7 place-items-center rounded-sm border transition-colors",
         tone === "danger"
           ? "border-border bg-card text-muted-foreground hover:border-destructive/60 hover:text-destructive"
-          : "border-border bg-card text-ink-soft hover:border-gold/60 hover:text-gold-deep",
+          : "border-border bg-card text-ink hover:border-red/60 hover:text-red-dark",
       )}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -384,7 +381,7 @@ function EditDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <Eyebrow className="text-gold-deep">Edit metadata · {resource.id}</Eyebrow>
+          <Eyebrow className="text-red-dark">Edit metadata · {resource.id}</Eyebrow>
           <DialogTitle className="font-display text-xl">{resource.title}</DialogTitle>
         </DialogHeader>
 
@@ -503,6 +500,20 @@ function EditDialog({
           <Field label="Author">
             <Input value={draft.author} onChange={(e) => set({ author: e.target.value })} className="h-9 rounded-sm text-[13px]" />
           </Field>
+          <Field label="Sub-Office">
+            <Select value={draft.subOffice} onValueChange={(v) => set({ subOffice: v })}>
+              <SelectTrigger className="h-9 rounded-sm text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                {SUB_OFFICE_NAMES.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
           <Field label="School">
             <Select value={draft.school} onValueChange={(v) => set({ school: v, subOffice: subOfficeFor(v) })}>
               <SelectTrigger className="h-9 rounded-sm text-[13px]">
@@ -567,7 +578,7 @@ function EditDialog({
           <button
             type="button"
             onClick={() => onSave(draft)}
-            className="focus-ring rounded-sm bg-ink px-4 py-2 text-[13px] font-semibold text-parchment"
+            className="focus-ring rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white"
           >
             Save metadata
           </button>
@@ -584,10 +595,10 @@ function VersionDialog({
 }: {
   resource: LearningResource | null;
   onClose: () => void;
-  onSave: (note: string, fileSizeKB: number, fileName: string, file: File | null) => void | Promise<void>;
+  onSave: (note: string, fileSizeKB: number, fileName: string, newLinkUrl: string | null) => void | Promise<void>;
 }) {
   const [note, setNote] = useState<string>("");
-  const [file, setFile] = useState<File | null>(null);
+  const [linkUrl, setLinkUrl] = useState<string>("");
   const [busy, setBusy] = useState<boolean>(false);
 
   if (!resource) return null;
@@ -596,29 +607,25 @@ function VersionDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <Eyebrow className="text-gold-deep">Replace file version</Eyebrow>
+          <Eyebrow className="text-red-dark">Replace resource link</Eyebrow>
           <DialogTitle className="font-display text-lg">{resource.title}</DialogTitle>
         </DialogHeader>
 
         <p className="text-[12px] text-muted-foreground">
-          Current version <span className="font-mono text-ink">{resource.version}</span> ·{" "}
-          {formatSize(resource.fileSizeKB)}. Uploading a replacement keeps the full version history for auditing.
+          Current version <span className="font-mono text-ink">{resource.version}</span>.
+          Replacing the link keeps the full version history for auditing.
         </p>
 
-        <label className="mt-3 block cursor-pointer rounded-sm border border-dashed border-border bg-muted/40 px-4 py-6 text-center transition-colors hover:border-gold/60">
-          <input
-            type="file"
-            className="hidden"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            accept=".pdf,.docx,.pptx,.epub,.mp4,.mp3,.png,.jpg"
-          />
-          <span className="block text-[13px] font-medium text-ink">
-            {file ? file.name : "Choose replacement file"}
-          </span>
-          <span className="mt-1 block text-[11px] text-muted-foreground">
-            {file ? formatSize(file.size / 1024) : "PDF, DOCX, PPTX, EPUB, MP4, MP3 or image"}
-          </span>
-        </label>
+        <div className="mt-3">
+          <Field label="New resource link URL">
+            <Input
+              value={linkUrl}
+              onChange={(event) => setLinkUrl(event.target.value)}
+              placeholder={resource.linkUrl ?? resource.fileName}
+              className="h-9 rounded-sm text-[13px]"
+            />
+          </Field>
+        </div>
 
         <div className="mt-3">
           <Field label="Revision note">
@@ -647,16 +654,16 @@ function VersionDialog({
               setBusy(true);
               Promise.resolve(
                 onSave(
-                  note.trim() || "Replacement file uploaded by the division administrator.",
-                  file ? Math.max(1, Math.round(file.size / 1024)) : resource.fileSizeKB,
-                  file?.name ?? resource.fileName,
-                  file,
+                  note.trim() || "Replacement link submitted by the division administrator.",
+                  resource.fileSizeKB,
+                  linkUrl.trim() || resource.fileName,
+                  linkUrl.trim() || null,
                 ),
               ).finally(() => setBusy(false));
             }}
-            className="focus-ring rounded-sm bg-ink px-4 py-2 text-[13px] font-semibold text-parchment disabled:opacity-60"
+            className="focus-ring rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
           >
-            {busy ? "Uploading…" : "Upload new version"}
+            {busy ? "Saving…" : "Save new version"}
           </button>
         </div>
       </DialogContent>

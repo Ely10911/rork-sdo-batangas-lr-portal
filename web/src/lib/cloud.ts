@@ -30,6 +30,11 @@ function asKind(value: string): FileKind {
   return (kinds.includes(value as FileKind) ? value : "pdf") as FileKind;
 }
 
+function asQuarter(value: string): string {
+  const quarters: string[] = ["All Quarters", "Quarter 1", "Quarter 2", "Quarter 3", "Quarter 4"];
+  return quarters.includes(value) ? value : "All Quarters";
+}
+
 function asStatus(value: string): ResourceStatus {
   const statuses: ResourceStatus[] = ["published", "pending", "draft", "archived"];
   return (statuses.includes(value as ResourceStatus) ? value : "draft") as ResourceStatus;
@@ -56,7 +61,7 @@ export function rowToResource(row: ResourceRow): LearningResource {
     gradeLevel: row.grade_level,
     keyStage: row.key_stage ?? "",
     shsStrand: row.shs_strand ?? null,
-    quarter: row.quarter as LearningResource["quarter"],
+    quarter: asQuarter(row.quarter) as LearningResource["quarter"],
     competencyCode: row.competency_code ?? "",
     learningCompetency: row.learning_competency ?? "",
     melcReference: row.melc_reference ?? "",
@@ -84,6 +89,7 @@ export function rowToResource(row: ResourceRow): LearningResource {
     views: row.views,
     featured: row.featured,
     storagePath: row.storage_path ?? null,
+    linkUrl: ((row as Record<string, unknown>).link_url as string | null) ?? null,
   };
 }
 
@@ -125,6 +131,7 @@ export function resourceToInsert(resource: LearningResource): ResourceInsert {
     views: resource.views,
     featured: resource.featured,
     storage_path: resource.storagePath ?? null,
+    link_url: resource.linkUrl ?? null,
   };
 }
 

@@ -4,7 +4,7 @@ export type FileKind = "pdf" | "docx" | "pptx" | "epub" | "video" | "audio" | "i
 
 export type ResourceStatus = "published" | "pending" | "draft" | "archived";
 
-export type Quarter = "Quarter 1" | "Quarter 2" | "Quarter 3" | "Quarter 4";
+export type Quarter = "All Quarters" | "Quarter 1" | "Quarter 2" | "Quarter 3" | "Quarter 4";
 
 export type UserRole = "admin" | "viewer";
 
@@ -69,6 +69,8 @@ export interface LearningResource {
   featured: boolean;
   /** Supabase Storage path (bucket-relative) when the file is persisted in the cloud. */
   storagePath: string | null;
+  /** External link URL entered by admin instead of uploading a file directly. */
+  linkUrl: string | null;
 }
 
 export interface DownloadEvent {

@@ -230,6 +230,7 @@ export type Database = {
           language: string
           learning_area: string
           learning_competency: string
+          link_url: string | null
           melc_reference: string
           pages: number
           publisher: string
@@ -270,6 +271,7 @@ export type Database = {
           language?: string
           learning_area: string
           learning_competency?: string
+          link_url?: string | null
           melc_reference?: string
           pages?: number
           publisher?: string
@@ -310,6 +312,7 @@ export type Database = {
           language?: string
           learning_area?: string
           learning_competency?: string
+          link_url?: string | null
           melc_reference?: string
           pages?: number
           publisher?: string

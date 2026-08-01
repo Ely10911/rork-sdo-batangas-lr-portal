@@ -18,7 +18,6 @@ import {
   SCHOOL_NAMES,
   SCHOOL_YEARS,
   SHS_STRANDS,
-  SUBJECTS_BY_AREA,
   SUB_OFFICE_NAMES,
   UPLOAD_WINDOWS,
 } from "@/lib/taxonomy";
@@ -55,7 +54,7 @@ function FilterSelect({
         <SelectTrigger
           className={cn(
             "h-9 rounded-sm border-input bg-card text-[13px] text-ink",
-            dirty && "border-gold/70 bg-gold/8 font-medium",
+            dirty && "border-red/70 bg-red/8 font-medium",
           )}
         >
           <SelectValue placeholder={anyLabel} />
@@ -80,12 +79,12 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
   const { resources } = useLrms();
 
   const subjectOptions = useMemo(() => {
-    const subjects =
-      filters.learningArea !== "any"
-        ? (SUBJECTS_BY_AREA[filters.learningArea] ?? [])
-        : Array.from(new Set(Object.values(SUBJECTS_BY_AREA).flat()));
-    return toOptions(subjects.slice().sort());
-  }, [filters.learningArea]);
+    const filtered = filters.learningArea !== "any"
+      ? resources.filter((r) => r.learningArea === filters.learningArea)
+      : resources;
+    const subjects = Array.from(new Set(filtered.map((r) => r.subject).filter(Boolean)));
+    return toOptions(subjects.sort());
+  }, [filters.learningArea, resources]);
 
   const authorOptions = useMemo(
     () => toOptions(Array.from(new Set(resources.map((r) => r.author))).sort()),
@@ -98,10 +97,10 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
     <div className={cn("plate overflow-hidden", className)}>
       <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-3">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-gold-deep" strokeWidth={1.8} />
-          <Eyebrow className="text-ink-soft">Refine results</Eyebrow>
+          <SlidersHorizontal className="h-4 w-4 text-red-dark" strokeWidth={1.8} />
+          <Eyebrow className="text-ink">Refine results</Eyebrow>
           {count > 0 && (
-            <span className="tabular rounded-full bg-ink px-1.5 py-0.5 text-[10px] font-semibold text-parchment">
+            <span className="tabular rounded-full bg-red px-1.5 py-0.5 text-[10px] font-semibold text-white">
               {count}
             </span>
           )}
@@ -109,7 +108,7 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
         <button
           type="button"
           onClick={onReset}
-          className="focus-ring inline-flex items-center gap-1 rounded-sm text-[11px] font-medium text-muted-foreground transition-colors hover:text-gold-deep"
+          className="focus-ring inline-flex items-center gap-1 rounded-sm text-[11px] font-medium text-muted-foreground transition-colors hover:text-red-dark"
         >
           <RotateCcw className="h-3 w-3" /> Reset
         </button>
@@ -232,7 +231,7 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
             placeholder="e.g. EN7RC-Ia"
             className={cn(
               "h-9 rounded-sm border-input bg-card font-mono text-[12px]",
-              filters.competencyCode && "border-gold/70 bg-gold/8",
+              filters.competencyCode && "border-red/70 bg-red/8",
             )}
           />
         </label>

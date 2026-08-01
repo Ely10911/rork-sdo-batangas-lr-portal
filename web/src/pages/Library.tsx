@@ -37,12 +37,12 @@ export default function Library() {
 
   return (
     <PortalShell>
-      <section className="ink-panel relative overflow-hidden border-b border-ink-soft/40">
+      <section className="red-panel relative overflow-hidden border-b border-red-dark/40">
         <div className="grid-lines absolute inset-0 opacity-60" />
         <div className="container relative py-10">
-          <Eyebrow className="text-gold-soft">Personal resource library</Eyebrow>
-          <h1 className="mt-2 font-display text-3xl font-bold text-parchment md:text-4xl">My library</h1>
-          <p className="mt-2 max-w-2xl text-[13px] text-parchment/60">
+          <Eyebrow className="text-red-soft">Personal resource library</Eyebrow>
+          <h1 className="mt-2 font-display text-3xl font-bold text-white md:text-4xl">My library</h1>
+          <p className="mt-2 max-w-2xl text-[13px] text-white/60">
             Your saved favorites, teaching collections and download history — kept on this device so you can pick up
             where you left off.
           </p>
@@ -61,8 +61,8 @@ export default function Library() {
                 className={cn(
                   "focus-ring inline-flex items-center gap-2 rounded-sm border px-3.5 py-2 text-[13px] font-medium transition-colors",
                   tab === item.key
-                    ? "border-ink bg-ink text-parchment"
-                    : "border-border bg-card text-ink-soft hover:border-gold/60",
+                    ? "border-red bg-red text-white"
+                    : "border-border bg-card text-ink hover:border-red/60",
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -70,7 +70,7 @@ export default function Library() {
                 <span
                   className={cn(
                     "tabular rounded-full px-1.5 text-[10px] font-bold",
-                    tab === item.key ? "bg-parchment/20 text-parchment" : "bg-muted text-muted-foreground",
+                    tab === item.key ? "bg-white/20 text-white" : "bg-muted text-muted-foreground",
                   )}
                 >
                   {item.count}
@@ -119,7 +119,7 @@ export default function Library() {
                   setName("");
                   toast.success("Collection created");
                 }}
-                className="focus-ring inline-flex items-center gap-2 rounded-sm bg-ink px-4 py-2 text-[13px] font-semibold text-parchment"
+                className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white"
               >
                 <FolderPlus className="h-4 w-4" /> Create collection
               </button>
@@ -141,7 +141,7 @@ export default function Library() {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3">
                       <div className="min-w-0">
                         <h3 className="flex items-center gap-2 font-display text-[17px] font-semibold text-ink">
-                          <FolderOpen className="h-4 w-4 text-gold-deep" /> {collection.name}
+                          <FolderOpen className="h-4 w-4 text-red-dark" /> {collection.name}
                         </h3>
                         <p className="mt-0.5 text-[12px] text-muted-foreground">
                           {items.length} resource{items.length === 1 ? "" : "s"} · {formatSize(totalKB)} · created{" "}
@@ -203,12 +203,12 @@ export default function Library() {
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
     <div className="plate flex flex-col items-center gap-3 px-6 py-16 text-center">
-      <Layers className="h-8 w-8 text-gold-deep" strokeWidth={1.5} />
+      <Layers className="h-8 w-8 text-red-dark" strokeWidth={1.5} />
       <h2 className="font-display text-xl font-semibold text-ink">{title}</h2>
       <p className="max-w-md text-[13px] text-muted-foreground">{body}</p>
       <Link
         to="/browse"
-        className="focus-ring mt-2 rounded-sm bg-ink px-4 py-2 text-[13px] font-medium text-parchment hover:bg-ink-soft"
+        className="focus-ring mt-2 rounded-sm bg-red px-4 py-2 text-[13px] font-medium text-white hover:bg-red-dark"
       >
         Browse the catalog
       </Link>

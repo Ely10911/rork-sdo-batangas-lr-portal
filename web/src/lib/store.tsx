@@ -119,6 +119,7 @@ function loadState(): PersistedShape {
     const resources = (parsed.resources ?? []).map((r) => ({
       ...r,
       storagePath: r.storagePath ?? null,
+      linkUrl: r.linkUrl ?? null,
     }));
     return {
       resources: resources.length ? resources : base.resources,

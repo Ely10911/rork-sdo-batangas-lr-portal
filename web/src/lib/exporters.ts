@@ -34,7 +34,7 @@ export function exportCsv(table: ReportTable, filename: string): void {
 }
 
 export function exportExcel(table: ReportTable, filename: string): void {
-  const head = table.columns.map((c) => `<th style="background:#0B1E2B;color:#F7F1E3;text-align:left">${c}</th>`).join("");
+  const head = table.columns.map((c) => `<th style="background:#C42B2B;color:#FFFFFF;text-align:left">${c}</th>`).join("");
   const body = table.rows
     .map((row) => `<tr>${row.map((cell) => `<td>${String(cell ?? "")}</td>`).join("")}</tr>`)
     .join("");
@@ -56,16 +56,16 @@ export function exportPdf(table: ReportTable): void {
   win.document.write(`<!doctype html><html><head><title>${table.title}</title>
   <style>
     @page { size: A4; margin: 16mm; }
-    body { font-family: "Public Sans", Helvetica, Arial, sans-serif; color:#0B1E2B; }
-    header { border-bottom: 2px solid #C8912F; padding-bottom: 10px; margin-bottom: 18px; }
-    .eyebrow { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color:#7a6a4f; }
+    body { font-family: "Public Sans", Helvetica, Arial, sans-serif; color:#1a1a2e; }
+    header { border-bottom: 2px solid #C42B2B; padding-bottom: 10px; margin-bottom: 18px; }
+    .eyebrow { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color:#8a2a2a; }
     h1 { font-family: Georgia, serif; font-size: 22px; margin: 6px 0 2px; }
     p.sub { margin: 0; font-size: 12px; color:#4b5b66; }
     table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
-    th { background: #0B1E2B; color: #F7F1E3; text-align: left; padding: 7px 8px; }
+    th { background: #C42B2B; color: #FFFFFF; text-align: left; padding: 7px 8px; }
     td { border-bottom: 1px solid #E2DACB; padding: 6px 8px; }
-    tr:nth-child(even) td { background: #FAF6EC; }
-    footer { margin-top: 20px; font-size: 10px; color:#7a6a4f; }
+    tr:nth-child(even) td { background: #fdf2f2; }
+    footer { margin-top: 20px; font-size: 10px; color:#8a2a2a; }
   </style></head><body>
     <header>
       <div class="eyebrow">Republic of the Philippines · Department of Education</div>

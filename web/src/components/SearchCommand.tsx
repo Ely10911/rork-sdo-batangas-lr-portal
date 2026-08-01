@@ -62,11 +62,11 @@ export function SearchCommand({ value, onChange, onSubmit, placeholder, size = "
           onSubmit(value);
         }}
         className={cn(
-          "flex items-center gap-2 border bg-card/95 shadow-plate transition-shadow focus-within:border-gold",
+          "flex items-center gap-2 border bg-card/95 shadow-plate transition-shadow focus-within:border-red",
           isHero ? "rounded-lg border-border/60 px-4 py-3" : "rounded-md border-border px-3 py-2",
         )}
       >
-        <Search className={cn("shrink-0 text-gold-deep", isHero ? "h-5 w-5" : "h-4 w-4")} strokeWidth={2} />
+        <Search className={cn("shrink-0 text-red-dark", isHero ? "h-5 w-5" : "h-4 w-4")} strokeWidth={2} />
         <input
           value={value}
           onChange={(event) => {
@@ -112,7 +112,7 @@ export function SearchCommand({ value, onChange, onSubmit, placeholder, size = "
         <button
           type="submit"
           className={cn(
-            "focus-ring shrink-0 rounded-sm bg-ink font-medium text-parchment transition-colors hover:bg-ink-soft",
+            "focus-ring shrink-0 rounded-sm bg-red font-medium text-white transition-colors hover:bg-red-dark",
             isHero ? "px-5 py-2 text-sm" : "px-3 py-1.5 text-[13px]",
           )}
         >
@@ -136,10 +136,10 @@ export function SearchCommand({ value, onChange, onSubmit, placeholder, size = "
                     onClick={() => commit(suggestion)}
                     className={cn(
                       "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
-                      cursor === i ? "bg-gold/12" : "hover:bg-muted/70",
+                      cursor === i ? "bg-red/12" : "hover:bg-muted/70",
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0 text-gold-deep" strokeWidth={1.8} />
+                    <Icon className="h-4 w-4 shrink-0 text-red-dark" strokeWidth={1.8} />
                     <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{suggestion.label}</span>
                     <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       {suggestion.hint}

@@ -43,11 +43,11 @@ export function AdminShell({
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="ink-panel sticky top-0 hidden h-screen w-[254px] shrink-0 flex-col border-r border-ink-soft/40 lg:flex">
-        <div className="border-b border-parchment/10 px-5 py-5">
-          <p className="eyebrow text-gold-soft">SDO Batangas</p>
-          <p className="mt-1 font-display text-[17px] font-bold leading-tight text-parchment">LRMS Admin Console</p>
-          <p className="mt-1 text-[11px] text-parchment/45">Curriculum Implementation Division</p>
+      <aside className="red-panel sticky top-0 hidden h-screen w-[254px] shrink-0 flex-col border-r border-red-dark/40 lg:flex">
+        <div className="border-b border-white/10 px-5 py-5">
+          <p className="eyebrow text-red-soft">SDO Batangas</p>
+          <p className="mt-1 font-display text-[17px] font-bold leading-tight text-white">LRMS Admin Console</p>
+          <p className="mt-1 text-[11px] text-white/45">Curriculum Implementation Division</p>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -63,15 +63,15 @@ export function AdminShell({
                   cn(
                     "focus-ring group flex items-center gap-3 rounded-sm px-3 py-2.5 text-[13px] font-medium transition-all",
                     isActive
-                      ? "bg-gold text-ink-deep shadow-inset"
-                      : "text-parchment/70 hover:bg-parchment/8 hover:text-parchment",
+                      ? "bg-red text-red-deep shadow-inset"
+                      : "text-white/70 hover:bg-white/8 hover:text-white",
                   )
                 }
               >
                 <Icon className="h-4 w-4" strokeWidth={1.9} />
                 <span className="flex-1">{item.label}</span>
                 {badge > 0 && (
-                  <span className="tabular rounded-full bg-parchment/15 px-1.5 text-[10px] font-bold text-parchment">
+                  <span className="tabular rounded-full bg-white/15 px-1.5 text-[10px] font-bold text-white">
                     {badge}
                   </span>
                 )}
@@ -80,17 +80,17 @@ export function AdminShell({
           })}
         </nav>
 
-        <div className="border-t border-parchment/10 px-3 py-4">
+        <div className="border-t border-white/10 px-3 py-4">
           <Link
             to="/"
-            className="focus-ring flex items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-parchment/70 transition-colors hover:text-gold-soft"
+            className="focus-ring flex items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-white/70 transition-colors hover:text-red-soft"
           >
             <Globe className="h-4 w-4" strokeWidth={1.8} /> View public portal
           </Link>
           <button
             type="button"
             onClick={logout}
-            className="focus-ring mt-1 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-parchment/70 transition-colors hover:text-destructive"
+            className="focus-ring mt-1 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-white/70 transition-colors hover:text-destructive"
           >
             <LogOut className="h-4 w-4" strokeWidth={1.8} /> Sign out
           </button>
@@ -101,7 +101,7 @@ export function AdminShell({
         <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-md">
           <div className="flex flex-wrap items-center gap-4 px-5 py-4 lg:px-8">
             <div className="min-w-0 flex-1">
-              <p className="eyebrow text-gold-deep">Administrator</p>
+              <p className="eyebrow text-red-dark">Administrator</p>
               <h1 className="mt-0.5 truncate font-display text-xl font-bold text-ink md:text-2xl">{title}</h1>
               <p className="mt-0.5 truncate text-[12px] text-muted-foreground">{subtitle}</p>
             </div>
@@ -109,7 +109,7 @@ export function AdminShell({
               {actions}
               <NotificationBell />
               <div className="hidden items-center gap-2 rounded-sm border border-border bg-card px-3 py-1.5 sm:flex">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[11px] font-bold text-parchment">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-red text-[11px] font-bold text-white">
                   LA
                 </span>
                 <span className="leading-tight">
@@ -129,7 +129,7 @@ export function AdminShell({
                 className={({ isActive }) =>
                   cn(
                     "whitespace-nowrap rounded-sm px-3 py-1.5 text-[12px] font-medium",
-                    isActive ? "bg-ink text-parchment" : "text-ink-soft hover:bg-muted",
+                    isActive ? "bg-red text-white" : "text-ink hover:bg-muted",
                   )
                 }
               >

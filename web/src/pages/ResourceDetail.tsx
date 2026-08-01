@@ -91,7 +91,7 @@ export default function ResourceDetail() {
           </p>
           <Link
             to="/browse"
-            className="focus-ring mt-6 inline-flex items-center gap-2 rounded-sm bg-ink px-4 py-2 text-[13px] text-parchment"
+            className="focus-ring mt-6 inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2 text-[13px] text-white"
           >
             <ArrowLeft className="h-4 w-4" /> Back to catalog
           </Link>
@@ -204,19 +204,19 @@ export default function ResourceDetail() {
     <PortalShell>
       <div className="border-b border-border/80 bg-muted/40">
         <div className="container flex items-center gap-2 py-3 text-[11px] text-muted-foreground">
-          <Link to="/" className="hover:text-gold-deep">
+          <Link to="/" className="hover:text-red-dark">
             Home
           </Link>
           <ChevronRight className="h-3 w-3" />
-          <Link to="/browse" className="hover:text-gold-deep">
+          <Link to="/browse" className="hover:text-red-dark">
             Catalog
           </Link>
           <ChevronRight className="h-3 w-3" />
-          <Link to={`/browse?area=${encodeURIComponent(resource.learningArea)}`} className="hover:text-gold-deep">
+          <Link to={`/browse?area=${encodeURIComponent(resource.learningArea)}`} className="hover:text-red-dark">
             {resource.learningArea}
           </Link>
           <ChevronRight className="h-3 w-3" />
-          <span className="truncate font-mono text-ink-soft">{resource.id}</span>
+          <span className="truncate font-mono text-ink">{resource.id}</span>
         </div>
       </div>
 
@@ -226,7 +226,7 @@ export default function ResourceDetail() {
             <FileKindTag kind={resource.fileKind} />
             <StatusPill status={resource.status} />
             <MetaChip tone="ink">{resource.quarter}</MetaChip>
-            {resource.featured && <MetaChip tone="gold">Featured</MetaChip>}
+            {resource.featured && <MetaChip tone="red">Featured</MetaChip>}
           </div>
 
           <h1 className="mt-3 font-display text-3xl font-bold leading-tight tracking-tight text-ink md:text-[38px]">
@@ -244,10 +244,10 @@ export default function ResourceDetail() {
             <span>Uploaded {formatRelative(resource.dateUploaded)}</span>
           </div>
 
-          <p className="mt-5 max-w-3xl text-[14px] leading-relaxed text-ink-soft">{resource.description}</p>
+          <p className="mt-5 max-w-3xl text-[14px] leading-relaxed text-ink">{resource.description}</p>
 
-          <div className="plate mt-6 border-l-2 border-l-gold p-4">
-            <Eyebrow className="text-gold-deep">Learning competency · {resource.competencyCode}</Eyebrow>
+          <div className="plate mt-6 border-l-2 border-l-red p-4">
+            <Eyebrow className="text-red-dark">Learning competency · {resource.competencyCode}</Eyebrow>
             <p className="mt-2 text-[14px] leading-relaxed text-ink">{resource.learningCompetency}</p>
             <p className="mt-2 font-mono text-[11px] text-muted-foreground">Reference: {resource.melcReference}</p>
           </div>
@@ -257,10 +257,9 @@ export default function ResourceDetail() {
             <button
               type="button"
               onClick={() => void handleDownload()}
-              className="focus-ring inline-flex items-center gap-2 rounded-sm bg-ink px-5 py-2.5 text-[13px] font-semibold text-parchment transition-all hover:bg-ink-soft active:scale-[0.98]"
+              className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-5 py-2.5 text-[13px] font-semibold text-white transition-all hover:bg-red-dark active:scale-[0.98]"
             >
-              <Download className="h-4 w-4" strokeWidth={2} /> Download {resource.fileKind.toUpperCase()} ·{" "}
-              {formatSize(resource.fileSizeKB)}
+              <Download className="h-4 w-4" strokeWidth={2} /> {resource.linkUrl ? "Open resource link" : `Download ${resource.fileKind.toUpperCase()}`}{!resource.linkUrl && resource.fileSizeKB > 0 ? ` · ${formatSize(resource.fileSizeKB)}` : ""}
             </button>
             <button
               type="button"
@@ -270,23 +269,23 @@ export default function ResourceDetail() {
               }}
               className={cn(
                 "focus-ring inline-flex items-center gap-2 rounded-sm border px-4 py-2.5 text-[13px] font-medium transition-colors",
-                saved ? "border-gold bg-gold/15 text-gold-deep" : "border-ink/25 bg-card text-ink hover:border-gold",
+                saved ? "border-red bg-red/15 text-red-dark" : "border-red/25 bg-card text-ink hover:border-red",
               )}
             >
-              <Bookmark className={cn("h-4 w-4", saved && "fill-gold")} /> {saved ? "Saved" : "Save to favorites"}
+              <Bookmark className={cn("h-4 w-4", saved && "fill-red")} /> {saved ? "Saved" : "Save to favorites"}
             </button>
 
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="focus-ring inline-flex items-center gap-2 rounded-sm border border-ink/25 bg-card px-4 py-2.5 text-[13px] font-medium text-ink hover:border-gold"
+                  className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-4 py-2.5 text-[13px] font-medium text-ink hover:border-red"
                 >
                   <FolderPlus className="h-4 w-4" /> Add to collection
                 </button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-[300px] p-0">
-                <p className="eyebrow border-b border-border bg-muted/60 px-3 py-2 text-ink-soft">My collections</p>
+                <p className="eyebrow border-b border-border bg-muted/60 px-3 py-2 text-ink">My collections</p>
                 <ul className="max-h-56 overflow-y-auto p-1">
                   {collections.length === 0 && (
                     <li className="px-3 py-3 text-[12px] text-muted-foreground">No collections yet.</li>
@@ -306,7 +305,7 @@ export default function ResourceDetail() {
                           <span
                             className={cn(
                               "grid h-4 w-4 place-items-center rounded-sm border",
-                              inside ? "border-gold bg-gold text-ink-deep" : "border-border",
+                              inside ? "border-red bg-red text-red-deep" : "border-border",
                             )}
                           >
                             {inside && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -333,7 +332,7 @@ export default function ResourceDetail() {
                       setNewCollection("");
                       toast.success("Collection created");
                     }}
-                    className="focus-ring shrink-0 rounded-sm bg-ink px-2.5 text-[12px] font-medium text-parchment"
+                    className="focus-ring shrink-0 rounded-sm bg-red px-2.5 text-[12px] font-medium text-white"
                   >
                     Add
                   </button>
@@ -349,7 +348,7 @@ export default function ResourceDetail() {
                   .then(() => toast.success("Permalink copied to clipboard"))
                   .catch(() => toast.error("Could not copy the link"));
               }}
-              className="focus-ring inline-flex items-center gap-2 rounded-sm border border-ink/25 bg-card px-4 py-2.5 text-[13px] font-medium text-ink hover:border-gold"
+              className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-4 py-2.5 text-[13px] font-medium text-ink hover:border-red"
             >
               <Share2 className="h-4 w-4" /> Share
             </button>
@@ -363,7 +362,7 @@ export default function ResourceDetail() {
 
           {/* Preview */}
           <div className="mt-8">
-            <Eyebrow className="text-gold-deep">Preview without downloading</Eyebrow>
+            <Eyebrow className="text-red-dark">Preview without downloading</Eyebrow>
             <div className="plate mt-2 overflow-hidden">
               <PreviewViewer resource={resource} />
             </div>
@@ -371,7 +370,7 @@ export default function ResourceDetail() {
 
           {/* Feedback */}
           <div className="mt-10">
-            <Eyebrow className="text-gold-deep">Teacher feedback</Eyebrow>
+            <Eyebrow className="text-red-dark">Teacher feedback</Eyebrow>
             <h2 className="mt-1 font-display text-2xl font-semibold text-ink">Ratings, issues & recommendations</h2>
 
             <div className="plate mt-4 overflow-hidden">
@@ -386,7 +385,7 @@ export default function ResourceDetail() {
                       className={cn(
                         "inline-flex items-center gap-2 px-4 py-3 text-[12px] font-medium transition-colors",
                         tab === item.key
-                          ? "border-b-2 border-gold bg-card text-ink"
+                          ? "border-b-2 border-red bg-card text-ink"
                           : "text-muted-foreground hover:text-ink",
                       )}
                     >
@@ -426,7 +425,7 @@ export default function ResourceDetail() {
                   <button
                     type="button"
                     onClick={submitFeedback}
-                    className="focus-ring rounded-sm bg-ink px-4 py-2 text-[13px] font-semibold text-parchment transition-transform active:scale-[0.98]"
+                    className="focus-ring rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white transition-transform active:scale-[0.98]"
                   >
                     Submit {tab === "review" ? "review" : tab === "issue" ? "report" : "recommendation"}
                   </button>
@@ -444,7 +443,7 @@ export default function ResourceDetail() {
                 <li key={item.id} className="plate p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[10px] font-bold text-parchment">
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-red text-[10px] font-bold text-white">
                         {item.author
                           .split(" ")
                           .slice(-2)
@@ -455,7 +454,7 @@ export default function ResourceDetail() {
                       </span>
                       <span className="text-[13px] font-semibold text-ink">{item.author}</span>
                       {item.kind !== "review" && (
-                        <MetaChip tone="gold">{item.kind === "issue" ? "Reported issue" : "Recommendation"}</MetaChip>
+                        <MetaChip tone="red">{item.kind === "issue" ? "Reported issue" : "Recommendation"}</MetaChip>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
@@ -463,8 +462,8 @@ export default function ResourceDetail() {
                       <span className="text-[11px] text-muted-foreground">{formatRelative(item.createdAt)}</span>
                     </div>
                   </div>
-                  <p className="mt-2 flex gap-2 text-[13px] leading-relaxed text-ink-soft">
-                    <MessageSquareQuote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-deep" />
+                  <p className="mt-2 flex gap-2 text-[13px] leading-relaxed text-ink">
+                    <MessageSquareQuote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-dark" />
                     {item.comment}
                   </p>
                 </li>
@@ -476,7 +475,7 @@ export default function ResourceDetail() {
         {/* Sidebar */}
         <aside className="space-y-5">
           <div className="plate overflow-hidden">
-            <p className="eyebrow border-b border-border bg-muted/50 px-4 py-2.5 text-ink-soft">
+            <p className="eyebrow border-b border-border bg-muted/50 px-4 py-2.5 text-ink">
               Complete metadata record
             </p>
             <dl className="divide-y divide-border/60">
@@ -502,7 +501,7 @@ export default function ResourceDetail() {
                   <Link
                     key={keyword}
                     to={`/browse?q=${encodeURIComponent(keyword)}`}
-                    className="focus-ring rounded-sm bg-muted px-2 py-0.5 text-[11px] text-ink-soft transition-colors hover:bg-gold/20 hover:text-gold-deep"
+                    className="focus-ring rounded-sm bg-muted px-2 py-0.5 text-[11px] text-ink transition-colors hover:bg-red/20 hover:text-red-dark"
                   >
                     #{keyword}
                   </Link>
@@ -512,7 +511,7 @@ export default function ResourceDetail() {
           </div>
 
           <div className="plate overflow-hidden">
-            <p className="eyebrow flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-2.5 text-ink-soft">
+            <p className="eyebrow flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-2.5 text-ink">
               <History className="h-3.5 w-3.5" /> Version history
             </p>
             <ol className="relative space-y-4 px-4 py-4">
@@ -521,7 +520,7 @@ export default function ResourceDetail() {
                   <span
                     className={cn(
                       "absolute left-0 top-1 h-3 w-3 rounded-full border-2",
-                      i === 0 ? "border-gold bg-gold/40" : "border-border bg-card",
+                      i === 0 ? "border-red bg-red/40" : "border-border bg-card",
                     )}
                   />
                   {i < resource.versions.length - 1 && (
@@ -529,7 +528,7 @@ export default function ResourceDetail() {
                   )}
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[12px] font-semibold text-ink">{version.version}</span>
-                    {i === 0 && <MetaChip tone="gold">Current</MetaChip>}
+                    {i === 0 && <MetaChip tone="red">Current</MetaChip>}
                   </div>
                   <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{version.note}</p>
                   <p className="tabular mt-0.5 text-[11px] text-muted-foreground/80">
@@ -542,7 +541,7 @@ export default function ResourceDetail() {
 
           {related.length > 0 && (
             <div>
-              <p className="eyebrow mb-3 text-gold-deep">Related resources</p>
+              <p className="eyebrow mb-3 text-red-dark">Related resources</p>
               <div className="plate overflow-hidden">
                 {related.map((item) => (
                   <ResourceCard key={item.id} resource={item} variant="row" />

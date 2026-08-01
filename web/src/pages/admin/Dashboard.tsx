@@ -58,10 +58,10 @@ function StatTile({
   value: string;
   delta?: string;
   icon: LucideIcon;
-  tone?: "ink" | "gold";
+  tone?: "ink" | "red";
 }) {
   return (
-    <div className={cn("plate relative overflow-hidden p-5", tone === "gold" && "border-gold/50 bg-gold/8")}>
+    <div className={cn("plate relative overflow-hidden p-5", tone === "red" && "border-red/50 bg-red/8")}>
       <div className="hatch pointer-events-none absolute inset-0 opacity-30" />
       <div className="relative flex items-start justify-between">
         <div>
@@ -76,7 +76,7 @@ function StatTile({
         <span
           className={cn(
             "grid h-9 w-9 place-items-center rounded-sm border",
-            tone === "gold" ? "border-gold/50 bg-gold/20 text-gold-deep" : "border-border bg-muted text-ink-soft",
+            tone === "red" ? "border-red/50 bg-red/20 text-red-dark" : "border-border bg-muted text-ink",
           )}
         >
           <Icon className="h-4 w-4" strokeWidth={1.9} />
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
       actions={
         <Link
           to="/admin/upload"
-          className="focus-ring inline-flex items-center gap-2 rounded-sm bg-gold px-3.5 py-2 text-[13px] font-semibold text-ink-deep hover:bg-gold-soft"
+          className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-3.5 py-2 text-[13px] font-semibold text-red-deep hover:bg-red-soft"
         >
           <UploadCloud className="h-4 w-4" /> Upload resources
         </Link>
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile label="Total users" value={formatNumber(users.length)} icon={Users} delta={`${users.filter((u) => u.active).length} active`} />
         <StatTile label="Uploaded resources" value={formatNumber(resources.length)} icon={FileStack} />
-        <StatTile label="Published resources" value={formatNumber(published.length)} icon={CheckCircle2} tone="gold" />
+        <StatTile label="Published resources" value={formatNumber(published.length)} icon={CheckCircle2} tone="red" />
         <StatTile
           label="Total downloads"
           value={formatNumber(totals.downloads)}
@@ -204,15 +204,15 @@ export default function AdminDashboard() {
         <div className="plate p-5">
           <div className="mb-4 flex items-end justify-between">
             <div>
-              <Eyebrow className="text-gold-deep">Utilization trend</Eyebrow>
+              <Eyebrow className="text-red-dark">Utilization trend</Eyebrow>
               <h2 className="mt-1 font-display text-lg font-semibold text-ink">Downloads & uploads per month</h2>
             </div>
             <div className="flex gap-4 text-[11px] text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-gold" /> Downloads
+                <span className="h-2 w-2 rounded-full bg-red" /> Downloads
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-ink" /> Uploads
+                <span className="h-2 w-2 rounded-full bg-red" /> Uploads
               </span>
             </div>
           </div>
@@ -220,11 +220,11 @@ export default function AdminDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={monthly} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
                 <defs>
-                  <linearGradient id="goldFill" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="redFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(34 68% 52%)" stopOpacity={0.55} />
                     <stop offset="100%" stopColor="hsl(34 68% 52%)" stopOpacity={0.04} />
                   </linearGradient>
-                  <linearGradient id="inkFill" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="darkFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(202 58% 20%)" stopOpacity={0.4} />
                     <stop offset="100%" stopColor="hsl(202 58% 20%)" stopOpacity={0.03} />
                   </linearGradient>
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
                   dataKey="downloads"
                   stroke="hsl(34 68% 46%)"
                   strokeWidth={2}
-                  fill="url(#goldFill)"
+                  fill="url(#redFill)"
                   name="Downloads"
                 />
                 <Area
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
                   dataKey="uploads"
                   stroke="hsl(202 58% 20%)"
                   strokeWidth={2}
-                  fill="url(#inkFill)"
+                  fill="url(#darkFill)"
                   name="Uploads"
                 />
               </AreaChart>
@@ -255,7 +255,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="plate p-5">
-          <Eyebrow className="text-gold-deep">Repository status</Eyebrow>
+          <Eyebrow className="text-red-dark">Repository status</Eyebrow>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink">Resource lifecycle</h2>
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
             {statusData.map((row) => (
               <li key={row.name} className="flex items-center gap-2 text-[12px]">
                 <span className="h-2.5 w-2.5 rounded-sm" style={{ background: row.fill }} />
-                <span className="flex-1 text-ink-soft">{row.name}</span>
+                <span className="flex-1 text-ink">{row.name}</span>
                 <span className="tabular font-semibold text-ink">{row.value}</span>
               </li>
             ))}
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1fr]">
         <div className="plate p-5">
-          <Eyebrow className="text-gold-deep">Coverage</Eyebrow>
+          <Eyebrow className="text-red-dark">Coverage</Eyebrow>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink">Published LRs by learning area</h2>
           <div className="mt-4 h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -312,8 +312,8 @@ export default function AdminDashboard() {
         <div className="space-y-5">
           <div className="plate overflow-hidden">
             <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
-              <Eyebrow className="text-ink-soft">Quality assurance queue</Eyebrow>
-              <Link to="/admin/resources" className="text-[12px] font-semibold text-gold-deep hover:underline">
+              <Eyebrow className="text-ink">Quality assurance queue</Eyebrow>
+              <Link to="/admin/resources" className="text-[12px] font-semibold text-red-dark hover:underline">
                 Open registry
               </Link>
             </div>
@@ -339,15 +339,15 @@ export default function AdminDashboard() {
 
           <div className="plate overflow-hidden">
             <div className="border-b border-border bg-muted/40 px-4 py-3">
-              <Eyebrow className="text-ink-soft">Most downloaded resources</Eyebrow>
+              <Eyebrow className="text-ink">Most downloaded resources</Eyebrow>
             </div>
             <ol className="divide-y divide-border/60">
               {topResources.map((resource, i) => (
                 <li key={resource.id} className="flex items-center gap-3 px-4 py-2.5">
-                  <span className="tabular w-5 font-display text-sm font-bold text-gold-deep/70">{i + 1}</span>
+                  <span className="tabular w-5 font-display text-sm font-bold text-red-dark/70">{i + 1}</span>
                   <Link
                     to={`/resource/${resource.id}`}
-                    className="min-w-0 flex-1 truncate text-[13px] text-ink hover:text-gold-deep"
+                    className="min-w-0 flex-1 truncate text-[13px] text-ink hover:text-red-dark"
                   >
                     {resource.title}
                   </Link>
@@ -359,7 +359,7 @@ export default function AdminDashboard() {
 
           <div className="plate overflow-hidden">
             <div className="border-b border-border bg-muted/40 px-4 py-3">
-              <Eyebrow className="text-ink-soft">Latest teacher feedback</Eyebrow>
+              <Eyebrow className="text-ink">Latest teacher feedback</Eyebrow>
             </div>
             <ul className="divide-y divide-border/60">
               {recentFeedback.map((item) => {
@@ -374,7 +374,7 @@ export default function AdminDashboard() {
                     {resource && (
                       <Link
                         to={`/resource/${resource.id}`}
-                        className="mt-1 block truncate text-[11px] font-medium text-gold-deep hover:underline"
+                        className="mt-1 block truncate text-[11px] font-medium text-red-dark hover:underline"
                       >
                         {resource.title}
                       </Link>

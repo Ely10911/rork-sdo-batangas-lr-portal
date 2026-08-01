@@ -12,9 +12,8 @@ import {
   COPYRIGHT_OPTIONS,
   DIVISION,
   QUARTERS,
-  districtFor,
-  keyStageFor,
   subOfficeFor,
+  keyStageFor,
 } from "./taxonomy";
 import { FILE_EXTENSION, slugify } from "./format";
 
@@ -109,7 +108,7 @@ const SPECS: Spec[] = [
     code: "S9ES-IIIa-b-1",
     competency: "Describe the different types of volcanoes and volcanic eruption using local landforms.",
     author: "Dr. Aileen M. Rosales",
-    school: "Division Learning Resource Center",
+    school: "Taal National High School",
     language: "English",
     keywords: ["volcano", "Taal", "landforms", "field study"],
     featured: true,
@@ -231,7 +230,7 @@ const SPECS: Spec[] = [
     code: "TLE-BPP11-Ia-4",
     competency: "Prepare and produce bakery products following standard recipes and safety practices.",
     author: "Chef Ramil O. Hernandez",
-    school: "Calaca Senior High School",
+    school: "San Pascual Senior High School 1",
     language: "English",
     keywords: ["bread", "pastry", "TVL", "competency-based"],
     strand: "TVL – Home Economics",
@@ -340,7 +339,7 @@ const SPECS: Spec[] = [
     code: "M2NS-Ib-27.4",
     competency: "Add two- to three-digit numbers with regrouping using concrete models.",
     author: "Analyn P. Rivera",
-    school: "Balayan Central School",
+    school: "Balayan East Central School",
     language: "English",
     keywords: ["numeracy", "regrouping", "remediation", "catch-up"],
   },
@@ -385,7 +384,7 @@ const SPECS: Spec[] = [
     code: "MK3KK-Ia-1",
     competency: "Naipapakita ang pagmamalaki sa kulturang Batangueño sa pamamagitan ng mga proyekto.",
     author: "Curriculum Implementation Division",
-    school: "Division Learning Resource Center",
+    school: "Taal Central School",
     language: "Filipino",
     keywords: ["MATATAG", "curriculum guide", "Makabansa", "contextualized"],
   },
@@ -400,7 +399,7 @@ const SPECS: Spec[] = [
     code: "S10MT-IIa-b-5",
     competency: "Design an investigation that applies the scientific method to a community problem.",
     author: "Dr. Aileen M. Rosales",
-    school: "Division Learning Resource Center",
+    school: "Taal National High School",
     language: "English",
     keywords: ["SIP", "research", "scientific method", "handbook"],
   },
@@ -648,12 +647,13 @@ export function buildResources(): LearningResource[] {
       views,
       featured: spec.featured ?? false,
       storagePath: null,
+      linkUrl: null,
     };
   });
 }
 
 function buildDescription(spec: Spec): string {
-  return `${spec.type} for ${spec.grade} ${spec.area} (${spec.subject}) aligned to competency ${spec.code}. ${spec.competency} Quality-assured by the ${DIVISION} Learning Resource Management System and contextualized for learners in ${districtFor(spec.school)}.`;
+  return `${spec.type} for ${spec.grade} ${spec.area} (${spec.subject}) aligned to competency ${spec.code}. ${spec.competency} Quality-assured by the ${DIVISION} Learning Resource Management System and contextualized for learners in ${subOfficeFor(spec.school)}.`;
 }
 
 export function buildDownloadEvents(resources: LearningResource[]): DownloadEvent[] {
@@ -759,7 +759,7 @@ export function buildNotifications(resources: LearningResource[]): AppNotificati
 export function buildUsers(): PortalUser[] {
   const rand = mulberry32(1357);
   const rows: [string, string, string][] = [
-    ["Dr. Aileen M. Rosales", "arosales", "Division Learning Resource Center"],
+    ["Dr. Aileen M. Rosales", "arosales", "Taal National High School"],
     ["Ma. Cristina L. Bautista", "cbautista", "Taal National High School"],
     ["Renato P. Dimaculangan", "rdimaculangan", "Bauan Technical High School"],
     ["Joel A. Manalo", "jmanalo", "Mabini National High School"],
@@ -780,8 +780,8 @@ export function buildUsers(): PortalUser[] {
       name: "Division LRMS Administrator",
       username: "SDOBatangasLRMS",
       role: "admin",
-      school: "Division Learning Resource Center",
-      subOffice: subOfficeFor("Division Learning Resource Center"),
+      school: "Taal National High School",
+      subOffice: subOfficeFor("Taal National High School"),
       lastActive: iso(0, rand),
       active: true,
     },

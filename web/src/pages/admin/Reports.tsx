@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { exportCsv, exportExcel, exportPdf, type ReportTable } from "@/lib/exporters";
 import { formatDate, formatNumber, monthKey, monthLabel } from "@/lib/format";
-import { DIVISION, GRADE_LEVELS, LEARNING_AREAS, SUB_OFFICES, districtFor } from "@/lib/taxonomy";
+import { DIVISION, GRADE_LEVELS, LEARNING_AREAS, SUB_OFFICE_NAMES, subOfficeFor } from "@/lib/taxonomy";
 import { useLrms, useRatingIndex } from "@/lib/store";
 
 type ReportKey =
@@ -77,23 +77,21 @@ export default function AdminReports() {
 
     if (key === "by-district") {
       const rows: (string | number)[][] = [];
-      SUB_OFFICES.forEach((office) => {
-        office.districts.forEach((district) => {
-          const items = published.filter((r) => districtFor(r.school) === district);
-          if (items.length === 0) return;
-          rows.push([
-            office.name,
-            district,
-            items.length,
-            items.reduce((sum, r) => sum + r.downloads, 0),
-            downloadEvents.filter((e) => e.subOffice === office.name).length,
-          ]);
-        });
+      SUB_OFFICE_NAMES.forEach((office) => {
+        const items = published.filter((r) => r.subOffice === office);
+        if (items.length === 0) return;
+        rows.push([
+          office,
+          subOfficeFor(items[0].school),
+          items.length,
+          items.reduce((sum, r) => sum + r.downloads, 0),
+          downloadEvents.filter((e) => e.subOffice === office).length,
+        ]);
       });
       return {
-        title: "Learning Resources by District and Sub-Office",
+        title: "Learning Resources by Sub-Office",
         subtitle: stamp,
-        columns: ["Sub-office", "District", "Published LRs", "LR downloads", "Sub-office download events"],
+        columns: ["Sub-office", "Published LRs", "LR downloads", "Sub-office download events"],
         rows,
       };
     }
@@ -103,7 +101,7 @@ export default function AdminReports() {
       return {
         title: "Learning Resources by School",
         subtitle: stamp,
-        columns: ["School", "District", "Sub-office", "Published LRs", "Downloads", "Avg. rating"],
+        columns: ["School", "Sub-office", "Published LRs", "Downloads", "Avg. rating"],
         rows: schools.map((school) => {
           const items = published.filter((r) => r.school === school);
           const rated = items.filter((r) => ratings[r.id]);
@@ -112,7 +110,7 @@ export default function AdminReports() {
             : 0;
           return [
             school,
-            districtFor(school),
+            subOfficeFor(school),
             items[0]?.subOffice ?? "—",
             items.length,
             items.reduce((sum, r) => sum + r.downloads, 0),
@@ -221,7 +219,7 @@ export default function AdminReports() {
               exportExcel(table, fileBase);
               toast.success("Excel workbook downloaded");
             }}
-            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-ink/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-gold"
+            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-red"
           >
             <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
           </button>
@@ -231,14 +229,14 @@ export default function AdminReports() {
               exportCsv(table, fileBase);
               toast.success("CSV file downloaded");
             }}
-            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-ink/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-gold"
+            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-red"
           >
             <FileText className="h-3.5 w-3.5" /> CSV
           </button>
           <button
             type="button"
             onClick={() => exportPdf(table)}
-            className="focus-ring inline-flex items-center gap-2 rounded-sm bg-gold px-3 py-2 text-[12px] font-semibold text-ink-deep hover:bg-gold-soft"
+            className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-3 py-2 text-[12px] font-semibold text-red-deep hover:bg-red-soft"
           >
             <Printer className="h-3.5 w-3.5" /> PDF
           </button>
@@ -249,7 +247,7 @@ export default function AdminReports() {
         <aside className="space-y-3">
           <div className="plate overflow-hidden">
             <div className="border-b border-border bg-muted/40 px-4 py-3">
-              <Eyebrow className="text-ink-soft">Standard reports</Eyebrow>
+              <Eyebrow className="text-ink">Standard reports</Eyebrow>
             </div>
             <ul className="p-2">
               {REPORTS.map((report) => (
@@ -259,14 +257,14 @@ export default function AdminReports() {
                     onClick={() => setKey(report.key)}
                     className={cn(
                       "w-full rounded-sm px-3 py-2.5 text-left transition-colors",
-                      key === report.key ? "bg-ink text-parchment" : "hover:bg-muted",
+                      key === report.key ? "bg-red text-white" : "hover:bg-muted",
                     )}
                   >
                     <span className="block text-[13px] font-medium">{report.label}</span>
                     <span
                       className={cn(
                         "mt-0.5 block text-[11px]",
-                        key === report.key ? "text-parchment/60" : "text-muted-foreground",
+                        key === report.key ? "text-white/60" : "text-muted-foreground",
                       )}
                     >
                       {report.blurb}
@@ -278,7 +276,7 @@ export default function AdminReports() {
           </div>
 
           <div className="plate p-4 sm:hidden">
-            <Eyebrow className="text-ink-soft">Export</Eyebrow>
+            <Eyebrow className="text-ink">Export</Eyebrow>
             <div className="mt-2 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -297,7 +295,7 @@ export default function AdminReports() {
               <button
                 type="button"
                 onClick={() => exportPdf(table)}
-                className="rounded-sm bg-gold px-3 py-1.5 text-[12px] font-semibold text-ink-deep"
+                className="rounded-sm bg-red px-3 py-1.5 text-[12px] font-semibold text-red-deep"
               >
                 PDF
               </button>
@@ -308,9 +306,9 @@ export default function AdminReports() {
         <section className="plate print-area overflow-hidden">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border bg-muted/40 px-5 py-4">
             <div>
-              <Eyebrow className="text-gold-deep">Republic of the Philippines · Department of Education</Eyebrow>
+              <Eyebrow className="text-red-dark">Republic of the Philippines · Department of Education</Eyebrow>
               <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-bold text-ink">
-                <ScrollText className="h-4 w-4 text-gold-deep" /> {table.title}
+                <ScrollText className="h-4 w-4 text-red-dark" /> {table.title}
               </h2>
               <p className="mt-0.5 text-[12px] text-muted-foreground">{table.subtitle}</p>
             </div>
@@ -322,7 +320,7 @@ export default function AdminReports() {
           <div className="max-h-[640px] overflow-auto">
             <table className="w-full border-collapse text-left">
               <thead className="sticky top-0">
-                <tr className="bg-ink text-parchment">
+                <tr className="bg-red text-white">
                   {table.columns.map((column) => (
                     <th key={column} className="whitespace-nowrap px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
                       {column}
@@ -337,7 +335,7 @@ export default function AdminReports() {
                       <td
                         key={j}
                         className={cn(
-                          "px-3 py-2 text-[12.5px] text-ink-soft",
+                          "px-3 py-2 text-[12.5px] text-ink",
                           typeof cell === "number" && "tabular font-medium text-ink",
                         )}
                       >

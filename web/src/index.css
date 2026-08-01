@@ -2,59 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* SDO Batangas LRMS design system — "civic archive": ink navy, parchment, antique gold.
-   All colors MUST be HSL. */
+/* SDO Batangas LRMS design system — professional white & red.
+   Clean, civic, institutional. All colors MUST be HSL. */
 
 @layer base {
   :root {
-    --parchment: 42 44% 95%;
-    --ink: 202 58% 12%;
-    --ink-soft: 201 34% 22%;
-    --ink-deep: 203 62% 8%;
-    --gold: 34 68% 52%;
-    --gold-soft: 36 74% 66%;
-    --gold-deep: 30 62% 38%;
-    --verdigris: 183 42% 28%;
-    --seal: 8 58% 44%;
+    --white: 0 0% 100%;
+    --red: 0 72% 42%;
+    --red-bright: 0 76% 50%;
+    --red-dark: 0 68% 32%;
+    --red-deep: 0 62% 22%;
+    --red-soft: 0 72% 52%;
+    --red-tint: 0 72% 96%;
+    --ink: 220 14% 16%;
+    --ink-soft: 220 10% 28%;
+    --gray-light: 220 14% 96%;
+    --gray-border: 220 12% 88%;
 
-    --background: 42 44% 95%;
-    --foreground: 202 58% 12%;
+    --background: 0 0% 100%;
+    --foreground: 220 14% 16%;
 
-    --card: 40 50% 98%;
-    --card-foreground: 202 58% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 16%;
 
-    --popover: 40 50% 98%;
-    --popover-foreground: 202 58% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 16%;
 
-    --primary: 202 58% 12%;
-    --primary-foreground: 42 48% 96%;
+    --primary: 0 72% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 26% 90%;
-    --secondary-foreground: 202 58% 12%;
+    --secondary: 0 72% 96%;
+    --secondary-foreground: 0 68% 32%;
 
-    --muted: 40 24% 91%;
-    --muted-foreground: 200 14% 38%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 42%;
 
-    --accent: 34 68% 52%;
-    --accent-foreground: 203 62% 8%;
+    --accent: 0 72% 42%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 8 58% 44%;
-    --destructive-foreground: 42 48% 96%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 38 20% 84%;
-    --input: 38 20% 82%;
-    --ring: 34 68% 52%;
+    --border: 220 12% 90%;
+    --input: 220 12% 88%;
+    --ring: 0 72% 42%;
 
     --radius: 0.375rem;
 
-    --sidebar-background: 203 62% 9%;
-    --sidebar-foreground: 40 30% 88%;
-    --sidebar-primary: 34 68% 52%;
-    --sidebar-primary-foreground: 203 62% 8%;
-    --sidebar-accent: 202 40% 16%;
-    --sidebar-accent-foreground: 42 44% 95%;
-    --sidebar-border: 202 32% 20%;
-    --sidebar-ring: 34 68% 52%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 14% 16%;
+    --sidebar-primary: 0 72% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 72% 96%;
+    --sidebar-accent-foreground: 0 68% 32%;
+    --sidebar-border: 220 12% 90%;
+    --sidebar-ring: 0 72% 42%;
   }
 }
 
@@ -74,20 +76,20 @@
       "ss01" on,
       "cv01" on;
     background-image:
-      radial-gradient(circle at 12% -10%, hsl(var(--gold) / 0.09), transparent 45%),
-      radial-gradient(circle at 92% 4%, hsl(var(--verdigris) / 0.08), transparent 42%);
+      radial-gradient(circle at 100% 0%, hsl(0 72% 96%) 0%, transparent 35%),
+      radial-gradient(circle at 0% 100%, hsl(0 72% 97%) 0%, transparent 30%);
     background-attachment: fixed;
   }
 
   ::selection {
-    background: hsl(var(--gold) / 0.32);
+    background: hsl(0 72% 90%);
+    color: hsl(0 68% 32%);
   }
 
   h1,
   h2,
   h3 {
     @apply font-display;
-    font-variation-settings: "SOFT" 0, "WONK" 0;
   }
 }
 
@@ -96,8 +98,8 @@
     @apply rounded-lg border border-border bg-card shadow-plate;
   }
 
-  .rule-gold {
-    background: linear-gradient(90deg, hsl(var(--gold)) 0%, hsl(var(--gold) / 0.15) 60%, transparent 100%);
+  .rule-red {
+    background: linear-gradient(90deg, hsl(var(--red)) 0%, hsl(var(--red) / 0.15) 60%, transparent 100%);
     height: 2px;
   }
 
@@ -105,17 +107,21 @@
     @apply font-mono text-[10px] uppercase tracking-[0.22em];
   }
 
-  .ink-panel {
+  .red-panel {
     background:
-      radial-gradient(ellipse 120% 80% at 15% -20%, hsl(var(--ink-soft) / 0.9), transparent 60%),
-      linear-gradient(165deg, hsl(var(--ink)) 0%, hsl(var(--ink-deep)) 100%);
+      radial-gradient(ellipse 120% 80% at 15% -20%, hsl(0 68% 38% / 0.9), transparent 60%),
+      linear-gradient(165deg, hsl(0 72% 42%) 0%, hsl(0 68% 28%) 100%);
+  }
+
+  .red-tint {
+    background-color: hsl(0 72% 96%);
   }
 
   .hatch {
     background-image: repeating-linear-gradient(
       -45deg,
-      hsl(var(--gold) / 0.14) 0px,
-      hsl(var(--gold) / 0.14) 1px,
+      hsl(0 72% 42% / 0.08) 0px,
+      hsl(0 72% 42% / 0.08) 1px,
       transparent 1px,
       transparent 7px
     );
@@ -123,8 +129,8 @@
 
   .grid-lines {
     background-image:
-      linear-gradient(to right, hsl(var(--parchment) / 0.06) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(var(--parchment) / 0.06) 1px, transparent 1px);
+      linear-gradient(to right, hsl(0 0% 100% / 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 100% / 0.08) 1px, transparent 1px);
     background-size: 44px 44px;
   }
 
@@ -133,8 +139,8 @@
       to bottom,
       transparent 0px,
       transparent 27px,
-      hsl(var(--ink) / 0.07) 27px,
-      hsl(var(--ink) / 0.07) 28px
+      hsl(0 72% 42% / 0.06) 27px,
+      hsl(0 72% 42% / 0.06) 28px
     );
   }
 
@@ -143,12 +149,12 @@
   }
   .card-hover:hover {
     transform: translateY(-3px);
-    box-shadow: 0 26px 52px -34px hsl(var(--ink) / 0.55);
-    border-color: hsl(var(--gold) / 0.55);
+    box-shadow: 0 26px 52px -34px hsl(0 72% 30% / 0.35);
+    border-color: hsl(0 72% 50% / 0.55);
   }
 
   .focus-ring {
-    @apply outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-gold;
+    @apply outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-red;
   }
 
   .tabular {
@@ -157,9 +163,6 @@
 }
 
 @layer utilities {
-  .text-shadow-ink {
-    text-shadow: 0 1px 0 hsl(var(--ink-deep) / 0.35);
-  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

@@ -92,12 +92,12 @@ export default function Browse() {
 
   return (
     <PortalShell>
-      <section className="ink-panel relative overflow-hidden border-b border-ink-soft/40">
+      <section className="red-panel relative overflow-hidden border-b border-red-dark/40">
         <div className="grid-lines absolute inset-0 opacity-60" />
         <div className="container relative py-10">
-          <Eyebrow className="text-gold-soft">Advanced search engine</Eyebrow>
-          <h1 className="mt-2 font-display text-3xl font-bold text-parchment md:text-4xl">Learning resource catalog</h1>
-          <p className="mt-2 max-w-2xl text-[13px] text-parchment/60">
+          <Eyebrow className="text-red-soft">Advanced search engine</Eyebrow>
+          <h1 className="mt-2 font-display text-3xl font-bold text-white md:text-4xl">Learning resource catalog</h1>
+          <p className="mt-2 max-w-2xl text-[13px] text-white/60">
             Search across {formatNumber(resources.filter((r) => r.status === "published").length)} published resources by
             keyword, competency code, learning area, author, school and more.
           </p>
@@ -141,7 +141,7 @@ export default function Browse() {
                   >
                     <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
                     {activeFilterCount(filters) > 0 && (
-                      <span className="tabular rounded-full bg-ink px-1.5 text-[10px] text-parchment">
+                      <span className="tabular rounded-full bg-red px-1.5 text-[10px] text-white">
                         {activeFilterCount(filters)}
                       </span>
                     )}
@@ -176,7 +176,7 @@ export default function Browse() {
                       aria-label={`${mode} view`}
                       className={cn(
                         "grid h-9 w-9 place-items-center transition-colors",
-                        layout === mode ? "bg-ink text-parchment" : "bg-card text-muted-foreground hover:bg-muted",
+                        layout === mode ? "bg-red text-white" : "bg-card text-muted-foreground hover:bg-muted",
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -194,7 +194,7 @@ export default function Browse() {
                   key={chip.key}
                   type="button"
                   onClick={() => patch({ [chip.key]: chip.key === "competencyCode" ? "" : "any" } as Partial<SearchFilters>)}
-                  className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/12 px-2.5 py-1 text-[11px] text-gold-deep transition-colors hover:bg-gold/20"
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-red/50 bg-red/12 px-2.5 py-1 text-[11px] text-red-dark transition-colors hover:bg-red/20"
                 >
                   <span className="font-semibold">{chip.label}:</span> {chip.value}
                   <X className="h-3 w-3" />
@@ -212,7 +212,7 @@ export default function Browse() {
 
           {results.length === 0 ? (
             <div className="plate flex flex-col items-center gap-3 px-6 py-16 text-center">
-              <SearchX className="h-8 w-8 text-gold-deep" strokeWidth={1.6} />
+              <SearchX className="h-8 w-8 text-red-dark" strokeWidth={1.6} />
               <h2 className="font-display text-xl font-semibold text-ink">No matching resources</h2>
               <p className="max-w-md text-[13px] text-muted-foreground">
                 Try a broader keyword, remove a filter, or search by competency code (for example{" "}
@@ -221,7 +221,7 @@ export default function Browse() {
               <button
                 type="button"
                 onClick={reset}
-                className="focus-ring mt-2 rounded-sm bg-ink px-4 py-2 text-[13px] font-medium text-parchment hover:bg-ink-soft"
+                className="focus-ring mt-2 rounded-sm bg-red px-4 py-2 text-[13px] font-medium text-white hover:bg-red-dark"
               >
                 Reset search
               </button>
@@ -245,7 +245,7 @@ export default function Browse() {
               <button
                 type="button"
                 onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                className="focus-ring rounded-sm border border-ink/25 bg-card px-5 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-gold hover:text-gold-deep"
+                className="focus-ring rounded-sm border border-red/25 bg-card px-5 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-red hover:text-red-dark"
               >
                 Load {Math.min(PAGE_SIZE, results.length - visible)} more resources
               </button>

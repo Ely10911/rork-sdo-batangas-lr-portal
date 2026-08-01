@@ -48,9 +48,9 @@ export function FileKindTag({ kind, className }: { kind: FileKind; className?: s
 
 const STATUS_STYLES: Record<ResourceStatus, string> = {
   published: "border-[hsl(150_42%_32%)]/35 bg-[hsl(150_42%_32%)]/12 text-[hsl(150_48%_24%)]",
-  pending: "border-gold/45 bg-gold/15 text-gold-deep",
+  pending: "border-red/45 bg-red/15 text-red-dark",
   draft: "border-border bg-muted text-muted-foreground",
-  archived: "border-ink/20 bg-ink/8 text-ink-soft",
+  archived: "border-red/20 bg-red/8 text-ink",
 };
 
 const STATUS_LABEL: Record<ResourceStatus, string> = {
@@ -99,7 +99,7 @@ export function StarRating({
               style={{ width: size, height: size }}
               className={cn(
                 "transition-transform",
-                filled ? "fill-gold text-gold" : "text-ink/25",
+                filled ? "fill-red text-red" : "text-ink/25",
                 onSelect ? "hover:scale-125" : "",
               )}
               strokeWidth={1.6}
@@ -132,7 +132,7 @@ export function StarRating({
 }
 
 export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cn("eyebrow text-gold-deep", className)}>{children}</p>;
+  return <p className={cn("eyebrow text-red-dark", className)}>{children}</p>;
 }
 
 export function MetaChip({
@@ -142,15 +142,15 @@ export function MetaChip({
 }: {
   children: React.ReactNode;
   className?: string;
-  tone?: "default" | "ink" | "gold";
+  tone?: "default" | "ink" | "red";
 }) {
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] leading-tight",
-        tone === "default" && "bg-muted text-ink-soft",
-        tone === "ink" && "bg-ink/8 text-ink",
-        tone === "gold" && "bg-gold/15 text-gold-deep",
+        tone === "default" && "bg-muted text-ink",
+        tone === "ink" && "bg-red/8 text-ink",
+        tone === "red" && "bg-red/15 text-red-dark",
         className,
       )}
     >
@@ -175,7 +175,7 @@ export function SectionHeading({
       <div>
         <Eyebrow>{eyebrow}</Eyebrow>
         <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink md:text-[26px]">{title}</h2>
-        <div className="rule-gold mt-2 w-16 origin-left animate-rule-in" />
+        <div className="rule-red mt-2 w-16 origin-left animate-rule-in" />
       </div>
       {action}
     </div>

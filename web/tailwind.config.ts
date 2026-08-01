@@ -25,19 +25,19 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        red: {
+          DEFAULT: "hsl(var(--red))",
+          bright: "hsl(var(--red-bright))",
+          dark: "hsl(var(--red-dark))",
+          deep: "hsl(var(--red-deep))",
+          soft: "hsl(var(--red-soft))",
+          tint: "hsl(var(--red-tint))",
+        },
         ink: {
           DEFAULT: "hsl(var(--ink))",
           soft: "hsl(var(--ink-soft))",
-          deep: "hsl(var(--ink-deep))",
         },
-        gold: {
-          DEFAULT: "hsl(var(--gold))",
-          soft: "hsl(var(--gold-soft))",
-          deep: "hsl(var(--gold-deep))",
-        },
-        verdigris: "hsl(var(--verdigris))",
-        seal: "hsl(var(--seal))",
-        parchment: "hsl(var(--parchment))",
+        white: "hsl(var(--white))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -83,8 +83,8 @@ export default {
         sm: "calc(var(--radius) - 3px)",
       },
       boxShadow: {
-        plate: "0 1px 0 0 hsl(var(--border)), 0 18px 40px -28px hsl(var(--ink) / 0.35)",
-        lift: "0 24px 60px -32px hsl(var(--ink) / 0.5)",
+        plate: "0 1px 0 0 hsl(var(--border)), 0 18px 40px -28px hsl(0 72% 30% / 0.2)",
+        lift: "0 24px 60px -32px hsl(0 72% 30% / 0.35)",
         inset: "inset 0 1px 0 0 hsl(0 0% 100% / 0.06)",
       },
       keyframes: {
