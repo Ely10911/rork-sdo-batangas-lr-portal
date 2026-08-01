@@ -27,13 +27,13 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
           className={cn(
             "focus-ring relative grid h-9 w-9 place-items-center rounded-sm border transition-colors",
             tone === "light"
-              ? "border-white/20 bg-white/5 text-white hover:border-red/60"
-              : "border-border bg-card text-ink hover:border-red/60",
+              ? "border-white/20 bg-white/5 text-white hover:border-gold/60"
+              : "border-border bg-card text-ink hover:border-gold/60",
           )}
         >
           <BellRing className="h-4 w-4" strokeWidth={1.8} />
           {unread > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 animate-pulse-dot place-items-center rounded-full bg-red px-1 text-[9px] font-bold text-red-deep">
+            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 animate-pulse-dot place-items-center rounded-full bg-gold px-1 text-[9px] font-bold text-gold-deep">
               {unread}
             </span>
           )}
@@ -45,7 +45,7 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
           <button
             type="button"
             onClick={markAllNotificationsRead}
-            className="focus-ring rounded-sm text-[11px] font-medium text-red-dark hover:underline"
+            className="focus-ring rounded-sm text-[11px] font-medium text-gold-deep hover:underline"
           >
             Mark all read
           </button>
@@ -57,14 +57,14 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
           {notifications.map((note) => {
             const Icon = KIND_ICON[note.kind];
             const inner = (
-              <div className={cn("flex gap-3 px-4 py-3 transition-colors hover:bg-red/6", !note.read && "bg-red/8")}>
+              <div className={cn("flex gap-3 px-4 py-3 transition-colors hover:bg-gold/6", !note.read && "bg-gold/8")}>
                 <span
                   className={cn(
                     "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-sm border",
                     note.kind === "curriculum"
-                      ? "border-red/50 bg-red/15 text-red-dark"
+                      ? "border-gold/50 bg-gold/15 text-gold-deep"
                       : note.kind === "system"
-                        ? "border-red-soft/40 bg-red-soft/10 text-red-soft"
+                        ? "border-gold-soft/40 bg-gold-soft/10 text-gold-soft"
                         : "border-border bg-muted text-ink",
                   )}
                 >
@@ -77,7 +77,7 @@ export function NotificationBell({ tone = "ink" }: { tone?: "ink" | "light" }) {
                     {formatRelative(note.at)}
                   </p>
                 </div>
-                {!note.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red" />}
+                {!note.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />}
               </div>
             );
             return (

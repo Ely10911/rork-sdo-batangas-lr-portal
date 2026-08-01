@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured, RESOURCES_BUCKET } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured, RESOURCES_BUCKET, VIEWER_ID } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type {
   AppNotification,
@@ -100,7 +100,7 @@ export function rowToResource(row: ResourceRow): LearningResource {
     views: row.views,
     featured: row.featured,
     storagePath: row.storage_path ?? null,
-    linkUrl: ((row as Record<string, unknown>).link_url as string | null) ?? null,
+    linkUrl: row.link_url ?? null,
   };
 }
 
@@ -145,7 +145,7 @@ export function resourceToInsert(resource: LearningResource): ResourceInsert {
   };
 }
 
-function rowToFeedback(row: FeedbackRow): Feedback {
+export function rowToFeedback(row: FeedbackRow): Feedback {
   return {
     id: row.id,
     resourceId: row.resource_id,
@@ -157,7 +157,7 @@ function rowToFeedback(row: FeedbackRow): Feedback {
   };
 }
 
-function rowToDownloadEvent(row: DownloadEventRow): DownloadEvent {
+export function rowToDownloadEvent(row: DownloadEventRow): DownloadEvent {
   const rawSchools = (row as Record<string, unknown>).schools;
   const rawSubOffices = (row as Record<string, unknown>).sub_offices;
   const legacySchool = typeof row.school === "string" ? row.school : "";
@@ -171,7 +171,7 @@ function rowToDownloadEvent(row: DownloadEventRow): DownloadEvent {
   };
 }
 
-function rowToCollection(row: CollectionRow): Collection {
+export function rowToCollection(row: CollectionRow): Collection {
   return {
     id: row.id,
     name: row.name,
@@ -181,7 +181,7 @@ function rowToCollection(row: CollectionRow): Collection {
   };
 }
 
-function rowToNotification(row: NotificationRow): AppNotification {
+export function rowToNotification(row: NotificationRow): AppNotification {
   return {
     id: row.id,
     kind: asNotificationKind(row.kind),
@@ -193,7 +193,7 @@ function rowToNotification(row: NotificationRow): AppNotification {
   };
 }
 
-function rowToPortalUser(row: PortalUserRow): PortalUser {
+export function rowToPortalUser(row: PortalUserRow): PortalUser {
   return {
     id: row.id,
     name: row.name,
@@ -240,7 +240,11 @@ export async function fetchCloudDownloadEvents(): Promise<DownloadEvent[]> {
 
 export async function fetchCloudCollections(): Promise<Collection[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase.from("collections").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("collections")
+    .select("*")
+    .eq("viewer_id", VIEWER_ID)
+    .order("created_at", { ascending: false });
   if (error) {
     console.warn("LRMS cloud: fetch collections failed", error.message);
     return [];
@@ -270,7 +274,7 @@ export async function fetchCloudUsers(): Promise<PortalUser[]> {
 
 export async function fetchCloudBookmarks(): Promise<string[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase.from("bookmarks").select("resource_id");
+  const { data, error } = await supabase.from("bookmarks").select("resource_id").eq("viewer_id", VIEWER_ID);
   if (error) {
     console.warn("LRMS cloud: fetch bookmarks failed", error.message);
     return [];
@@ -340,6 +344,7 @@ export async function upsertCloudCollection(collection: Collection): Promise<voi
     name: collection.name,
     description: collection.description,
     resource_ids: collection.resourceIds,
+    viewer_id: VIEWER_ID,
     created_at: collection.createdAt,
   });
   if (error) console.warn("LRMS cloud: upsert collection failed", error.message);
@@ -347,17 +352,17 @@ export async function upsertCloudCollection(collection: Collection): Promise<voi
 
 export async function deleteCloudCollection(id: string): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from("collections").delete().eq("id", id);
+  const { error } = await supabase.from("collections").delete().eq("id", id).eq("viewer_id", VIEWER_ID);
   if (error) console.warn("LRMS cloud: delete collection failed", error.message);
 }
 
 export async function toggleCloudBookmark(resourceId: string, add: boolean): Promise<void> {
   if (!supabase) return;
   if (add) {
-    const { error } = await supabase.from("bookmarks").insert({ resource_id: resourceId });
+    const { error } = await supabase.from("bookmarks").insert({ resource_id: resourceId, viewer_id: VIEWER_ID });
     if (error && error.code !== "23505") console.warn("LRMS cloud: insert bookmark failed", error.message);
   } else {
-    const { error } = await supabase.from("bookmarks").delete().eq("resource_id", resourceId);
+    const { error } = await supabase.from("bookmarks").delete().eq("resource_id", resourceId).eq("viewer_id", VIEWER_ID);
     if (error) console.warn("LRMS cloud: delete bookmark failed", error.message);
   }
 }
@@ -397,6 +402,68 @@ export async function upsertCloudUser(user: PortalUser): Promise<void> {
   if (error) console.warn("LRMS cloud: upsert portal_user failed", error.message);
 }
 
+/* ---------------------------------- realtime -------------------------------- */
+
+export type CloudRefresh = () => void;
+
+export type RealtimeCallback = (payload: {
+  table: string;
+  event: "INSERT" | "UPDATE" | "DELETE";
+  new?: unknown;
+  old?: { id?: string | number };
+}) => void;
+
+export function subscribeToCloudChanges(onChange: RealtimeCallback): (() => void) | undefined {
+  if (!supabase) return undefined;
+
+  const channel = supabase
+    .channel("lrms-public-changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "resources" },
+      (payload) => onChange({ table: "resources", event: payload.eventType as "INSERT" | "UPDATE" | "DELETE", new: payload.new, old: payload.old }),
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "notifications" },
+      (payload) => onChange({ table: "notifications", event: payload.eventType as "INSERT" | "UPDATE" | "DELETE", new: payload.new, old: payload.old }),
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "feedback" },
+      (payload) => onChange({ table: "feedback", event: payload.eventType as "INSERT" | "UPDATE" | "DELETE", new: payload.new, old: payload.old }),
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "download_events" },
+      (payload) => onChange({ table: "download_events", event: payload.eventType as "INSERT" | "UPDATE" | "DELETE", new: payload.new, old: payload.old }),
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "collections" },
+      (payload) => onChange({ table: "collections", event: payload.eventType as "INSERT" | "UPDATE" | "DELETE", new: payload.new, old: payload.old }),
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "bookmarks" },
+      (payload) => onChange({ table: "bookmarks", event: payload.eventType as "INSERT" | "UPDATE" | "DELETE", new: payload.new, old: payload.old }),
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "portal_users" },
+      (payload) => onChange({ table: "portal_users", event: payload.eventType as "INSERT" | "UPDATE" | "DELETE", new: payload.new, old: payload.old }),
+    )
+    .subscribe((status) => {
+      if (status === "CHANNEL_ERROR") {
+        console.warn("LRMS cloud: realtime channel error");
+      }
+    });
+
+  return () => {
+    void supabase?.removeChannel(channel);
+  };
+}
+
 /* ---------------------------------- seeding ----------------------------------- */
 
 /**
@@ -405,9 +472,7 @@ export async function upsertCloudUser(user: PortalUser): Promise<void> {
  */
 export async function seedCloudIfEmpty(resources: LearningResource[]): Promise<void> {
   if (!supabase || resources.length === 0) return;
-  const { count, error } = await supabase
-    .from("resources")
-    .select("id", { count: "exact", head: true });
+  const { count, error } = await supabase.from("resources").select("id", { count: "exact", head: true });
   if (error) {
     console.warn("LRMS cloud: seed count failed", error.message);
     return;

@@ -35,20 +35,20 @@ export default function Login() {
   };
 
   return (
-    <div className="red-panel relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
+    <div className="ink-panel relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
       <div className="grid-lines absolute inset-0 opacity-70" />
-      <div className="pointer-events-none absolute -left-32 top-1/4 h-[420px] w-[420px] rounded-full bg-red/10 blur-[110px]" />
-      <div className="pointer-events-none absolute -right-24 bottom-0 h-[360px] w-[360px] rounded-full bg-red-soft/15 blur-[100px]" />
+      <div className="pointer-events-none absolute -left-32 top-1/4 h-[420px] w-[420px] rounded-full bg-gold/10 blur-[110px]" />
+      <div className="pointer-events-none absolute -right-24 bottom-0 h-[360px] w-[360px] rounded-full bg-gold-soft/15 blur-[100px]" />
 
       <div className="relative grid w-full max-w-5xl gap-10 lg:grid-cols-[1fr_400px] lg:items-center">
         <div className="animate-fade-rise">
           <div className="flex items-center gap-3">
-            <span className="relative grid h-12 w-12 place-items-center rounded-full border border-red/60 bg-red-deep">
-              <span className="absolute inset-[3px] rounded-full border border-red/25" />
-              <ShieldCheck className="h-5 w-5 text-red" strokeWidth={1.7} />
+            <span className="relative grid h-12 w-12 place-items-center rounded-full border border-gold/60 bg-gold-deep">
+              <span className="absolute inset-[3px] rounded-full border border-gold/25" />
+              <ShieldCheck className="h-5 w-5 text-gold" strokeWidth={1.7} />
             </span>
             <div>
-              <Eyebrow className="text-red-soft">Secure access</Eyebrow>
+              <Eyebrow className="text-gold-soft">Secure access</Eyebrow>
               <p className="font-display text-lg font-bold text-white">LRMS Administrator Console</p>
             </div>
           </div>
@@ -69,7 +69,7 @@ export default function Login() {
               "Reports exportable to Excel, CSV & PDF",
             ].map((item) => (
               <li key={item} className="flex items-start gap-2 text-[13px] text-white/70">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-red" />
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
                 {item}
               </li>
             ))}
@@ -82,7 +82,7 @@ export default function Login() {
                 continueAsViewer();
                 navigate("/browse");
               }}
-              className="focus-ring inline-flex items-center gap-2 rounded-sm border border-white/25 px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:border-red hover:text-red-soft"
+              className="focus-ring inline-flex items-center gap-2 rounded-sm border border-white/25 px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:border-gold hover:text-gold-soft"
             >
               Continue as public viewer <ArrowRight className="h-4 w-4" />
             </button>
@@ -93,7 +93,7 @@ export default function Login() {
         </div>
 
         <div className="animate-fade-rise rounded-lg border border-white/12 bg-white/[0.06] p-6 backdrop-blur-md">
-          <p className="eyebrow text-red-soft">Restricted area</p>
+          <p className="eyebrow text-gold-soft">Restricted area</p>
           <h2 className="mt-1.5 font-display text-2xl font-bold text-white">System Administrator sign-in</h2>
           <p className="mt-1 text-[12px] text-white/50">{DIVISION}</p>
 
@@ -107,7 +107,7 @@ export default function Login() {
                   onChange={(event) => setUsername(event.target.value)}
                   autoComplete="username"
                   placeholder="Enter administrator username"
-                  className="h-10 rounded-sm border-white/20 bg-red-deep/60 pl-9 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-red"
+                  className="h-10 rounded-sm border-white/20 bg-gold-deep/60 pl-9 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-gold"
                 />
               </div>
             </label>
@@ -122,7 +122,7 @@ export default function Login() {
                   type={reveal ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="Enter password"
-                  className="h-10 rounded-sm border-white/20 bg-red-deep/60 pl-9 pr-10 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-red"
+                  className="h-10 rounded-sm border-white/20 bg-gold-deep/60 pl-9 pr-10 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-gold"
                 />
                 <button
                   type="button"
@@ -145,7 +145,7 @@ export default function Login() {
               type="submit"
               disabled={busy}
               className={cn(
-                "focus-ring flex w-full items-center justify-center gap-2 rounded-sm bg-red px-4 py-2.5 text-[13px] font-bold text-red-deep transition-all hover:bg-red-soft active:scale-[0.99]",
+                "focus-ring flex w-full items-center justify-center gap-2 rounded-sm bg-gold px-4 py-2.5 text-[13px] font-bold text-gold-deep transition-all hover:bg-gold-soft active:scale-[0.99]",
                 busy && "opacity-70",
               )}
             >

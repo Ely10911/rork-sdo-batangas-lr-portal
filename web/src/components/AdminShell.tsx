@@ -43,9 +43,9 @@ export function AdminShell({
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="red-panel sticky top-0 hidden h-screen w-[254px] shrink-0 flex-col border-r border-red-dark/40 lg:flex">
+      <aside className="ink-panel sticky top-0 hidden h-screen w-[254px] shrink-0 flex-col border-r border-gold-deep/40 lg:flex">
         <div className="border-b border-white/10 px-5 py-5">
-          <p className="eyebrow text-red-soft">SDO Batangas</p>
+          <p className="eyebrow text-gold-soft">SDO Batangas</p>
           <p className="mt-1 font-display text-[17px] font-bold leading-tight text-white">LRMS Admin Console</p>
           <p className="mt-1 text-[11px] text-white/45">Curriculum Implementation Division</p>
         </div>
@@ -63,7 +63,7 @@ export function AdminShell({
                   cn(
                     "focus-ring group flex items-center gap-3 rounded-sm px-3 py-2.5 text-[13px] font-medium transition-all",
                     isActive
-                      ? "bg-red text-red-deep shadow-inset"
+                      ? "bg-gold text-gold-deep shadow-inset"
                       : "text-white/70 hover:bg-white/8 hover:text-white",
                   )
                 }
@@ -83,7 +83,7 @@ export function AdminShell({
         <div className="border-t border-white/10 px-3 py-4">
           <Link
             to="/"
-            className="focus-ring flex items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-white/70 transition-colors hover:text-red-soft"
+            className="focus-ring flex items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-white/70 transition-colors hover:text-gold-soft"
           >
             <Globe className="h-4 w-4" strokeWidth={1.8} /> View public portal
           </Link>
@@ -101,7 +101,7 @@ export function AdminShell({
         <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-md">
           <div className="flex flex-wrap items-center gap-4 px-5 py-4 lg:px-8">
             <div className="min-w-0 flex-1">
-              <p className="eyebrow text-red-dark">Administrator</p>
+              <p className="eyebrow text-gold-deep">Administrator</p>
               <h1 className="mt-0.5 truncate font-display text-xl font-bold text-ink md:text-2xl">{title}</h1>
               <p className="mt-0.5 truncate text-[12px] text-muted-foreground">{subtitle}</p>
             </div>
@@ -109,7 +109,7 @@ export function AdminShell({
               {actions}
               <NotificationBell />
               <div className="hidden items-center gap-2 rounded-sm border border-border bg-card px-3 py-1.5 sm:flex">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-red text-[11px] font-bold text-white">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-gold text-[11px] font-bold text-white">
                   LA
                 </span>
                 <span className="leading-tight">
@@ -129,7 +129,7 @@ export function AdminShell({
                 className={({ isActive }) =>
                   cn(
                     "whitespace-nowrap rounded-sm px-3 py-1.5 text-[12px] font-medium",
-                    isActive ? "bg-red text-white" : "text-ink hover:bg-muted",
+                    isActive ? "bg-gold text-white" : "text-ink hover:bg-muted",
                   )
                 }
               >

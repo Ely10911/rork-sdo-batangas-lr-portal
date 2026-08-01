@@ -219,7 +219,7 @@ export default function AdminReports() {
               exportExcel(table, fileBase);
               toast.success("Excel workbook downloaded");
             }}
-            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-red"
+            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-gold"
           >
             <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
           </button>
@@ -229,14 +229,14 @@ export default function AdminReports() {
               exportCsv(table, fileBase);
               toast.success("CSV file downloaded");
             }}
-            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-red"
+            className="focus-ring inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-card px-3 py-2 text-[12px] font-medium text-ink hover:border-gold"
           >
             <FileText className="h-3.5 w-3.5" /> CSV
           </button>
           <button
             type="button"
             onClick={() => exportPdf(table)}
-            className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-3 py-2 text-[12px] font-semibold text-red-deep hover:bg-red-soft"
+            className="focus-ring inline-flex items-center gap-2 rounded-sm bg-gold px-3 py-2 text-[12px] font-semibold text-gold-deep hover:bg-gold-soft"
           >
             <Printer className="h-3.5 w-3.5" /> PDF
           </button>
@@ -257,7 +257,7 @@ export default function AdminReports() {
                     onClick={() => setKey(report.key)}
                     className={cn(
                       "w-full rounded-sm px-3 py-2.5 text-left transition-colors",
-                      key === report.key ? "bg-red text-white" : "hover:bg-muted",
+                      key === report.key ? "bg-gold text-white" : "hover:bg-muted",
                     )}
                   >
                     <span className="block text-[13px] font-medium">{report.label}</span>
@@ -295,7 +295,7 @@ export default function AdminReports() {
               <button
                 type="button"
                 onClick={() => exportPdf(table)}
-                className="rounded-sm bg-red px-3 py-1.5 text-[12px] font-semibold text-red-deep"
+                className="rounded-sm bg-gold px-3 py-1.5 text-[12px] font-semibold text-gold-deep"
               >
                 PDF
               </button>
@@ -306,9 +306,9 @@ export default function AdminReports() {
         <section className="plate print-area overflow-hidden">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border bg-muted/40 px-5 py-4">
             <div>
-              <Eyebrow className="text-red-dark">Republic of the Philippines · Department of Education</Eyebrow>
+              <Eyebrow className="text-gold-deep">Republic of the Philippines · Department of Education</Eyebrow>
               <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-bold text-ink">
-                <ScrollText className="h-4 w-4 text-red-dark" /> {table.title}
+                <ScrollText className="h-4 w-4 text-gold-deep" /> {table.title}
               </h2>
               <p className="mt-0.5 text-[12px] text-muted-foreground">{table.subtitle}</p>
             </div>
@@ -320,7 +320,7 @@ export default function AdminReports() {
           <div className="max-h-[640px] overflow-auto">
             <table className="w-full border-collapse text-left">
               <thead className="sticky top-0">
-                <tr className="bg-red text-white">
+                <tr className="bg-gold text-white">
                   {table.columns.map((column) => (
                     <th key={column} className="whitespace-nowrap px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
                       {column}

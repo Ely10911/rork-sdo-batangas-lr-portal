@@ -70,7 +70,7 @@ function MultiSelect({
               key={value}
               type="button"
               onClick={() => toggle(value)}
-              className="focus-ring inline-flex items-center gap-1 rounded-sm bg-red/15 px-2 py-1 text-[12px] font-medium text-red-dark hover:bg-red/25"
+              className="focus-ring inline-flex items-center gap-1 rounded-sm bg-gold/15 px-2 py-1 text-[12px] font-medium text-gold-deep hover:bg-gold/25"
             >
               {value}
               <X className="h-3 w-3" />
@@ -104,13 +104,13 @@ function MultiSelect({
               onClick={() => toggle(option)}
               className={cn(
                 "flex w-full items-center gap-2 border-b border-border/40 px-3 py-2 text-left text-[13px] transition-colors last:border-b-0",
-                isSel ? "bg-red/10 text-red-dark" : "text-ink hover:bg-muted",
+                isSel ? "bg-gold/10 text-gold-deep" : "text-ink hover:bg-muted",
               )}
             >
               <span
                 className={cn(
                   "grid h-4 w-4 shrink-0 place-items-center rounded-sm border",
-                  isSel ? "border-red bg-red text-white" : "border-border",
+                  isSel ? "border-gold bg-gold text-white" : "border-border",
                 )}
               >
                 {isSel && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -220,27 +220,27 @@ export default function ManageResources() {
       </div>
 
       {selected.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-red/50 bg-red/12 px-4 py-3">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-gold/50 bg-gold/12 px-4 py-3">
           <span className="text-[14px] font-semibold text-ink">{selected.length} selected</span>
           <div className="ml-auto flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => bulk("published")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-red px-3 py-1.5 text-[13px] font-medium text-white"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-gold px-3 py-1.5 text-[13px] font-medium text-white"
             >
               <CheckCircle2 className="h-3.5 w-3.5" /> Publish
             </button>
             <button
               type="button"
               onClick={() => bulk("pending")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-gold/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink"
             >
               <Send className="h-3.5 w-3.5" /> Send to QA
             </button>
             <button
               type="button"
               onClick={() => bulk("archived")}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-gold/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink"
             >
               <Archive className="h-3.5 w-3.5" /> Archive
             </button>
@@ -266,14 +266,14 @@ export default function ManageResources() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-border bg-red text-white">
+              <tr className="border-b border-border bg-gold text-white">
                 <th className="w-10 px-3 py-2.5">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={() => setSelected(allSelected ? [] : rows.map((r) => r.id))}
                     aria-label="Select all resources"
-                    className="h-3.5 w-3.5 accent-red"
+                    className="h-3.5 w-3.5 accent-gold"
                   />
                 </th>
                 {["Resource", "Classification", "File", "Status", "Usage", "Actions"].map((head) => (
@@ -285,7 +285,7 @@ export default function ManageResources() {
             </thead>
             <tbody>
               {rows.map((resource) => (
-                <tr key={resource.id} className="border-b border-border/60 align-top transition-colors hover:bg-red/5">
+                <tr key={resource.id} className="border-b border-border/60 align-top transition-colors hover:bg-gold/5">
                   <td className="px-3 py-3">
                     <input
                       type="checkbox"
@@ -296,11 +296,11 @@ export default function ManageResources() {
                         )
                       }
                       aria-label={`Select ${resource.title}`}
-                      className="h-3.5 w-3.5 accent-red"
+                      className="h-3.5 w-3.5 accent-gold"
                     />
                   </td>
                   <td className="max-w-[320px] px-3 py-3">
-                    <Link to={`/resource/${resource.id}`} className="block truncate text-[14px] font-semibold text-ink hover:text-red-dark">
+                    <Link to={`/resource/${resource.id}`} className="block truncate text-[14px] font-semibold text-ink hover:text-gold-deep">
                       {resource.title}
                     </Link>
                     <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
@@ -437,7 +437,7 @@ function IconAction({
         "focus-ring grid h-7 w-7 place-items-center rounded-sm border transition-colors",
         tone === "danger"
           ? "border-border bg-card text-muted-foreground hover:border-destructive/60 hover:text-destructive"
-          : "border-border bg-card text-ink hover:border-red/60 hover:text-red-dark",
+          : "border-border bg-card text-ink hover:border-gold/60 hover:text-gold-deep",
       )}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -474,7 +474,7 @@ function EditDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <Eyebrow className="text-red-dark">Edit metadata · {resource.id}</Eyebrow>
+          <Eyebrow className="text-gold-deep">Edit metadata · {resource.id}</Eyebrow>
           <DialogTitle className="font-display text-xl">{resource.title}</DialogTitle>
         </DialogHeader>
 
@@ -679,7 +679,7 @@ function EditDialog({
           <button
             type="button"
             onClick={() => onSave(draft)}
-            className="focus-ring rounded-sm bg-red px-4 py-2 text-[14px] font-semibold text-white"
+            className="focus-ring rounded-sm bg-gold px-4 py-2 text-[14px] font-semibold text-white"
           >
             Save metadata
           </button>
@@ -708,7 +708,7 @@ function VersionDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <Eyebrow className="text-red-dark">Replace resource link</Eyebrow>
+          <Eyebrow className="text-gold-deep">Replace resource link</Eyebrow>
           <DialogTitle className="font-display text-lg">{resource.title}</DialogTitle>
         </DialogHeader>
 
@@ -761,7 +761,7 @@ function VersionDialog({
                 ),
               ).finally(() => setBusy(false));
             }}
-            className="focus-ring rounded-sm bg-red px-4 py-2 text-[14px] font-semibold text-white disabled:opacity-60"
+            className="focus-ring rounded-sm bg-gold px-4 py-2 text-[14px] font-semibold text-white disabled:opacity-60"
           >
             {busy ? "Saving…" : "Save new version"}
           </button>

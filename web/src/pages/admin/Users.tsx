@@ -111,7 +111,7 @@ export default function AdminUsers() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] border-collapse text-left">
             <thead>
-              <tr className="bg-red text-white">
+              <tr className="bg-gold text-white">
                 {["User", "Role", "School", "Sub-office", "Uploads", "Last active", "Status"].map((head) => (
                   <th key={head} className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em]">
                     {head}
@@ -121,10 +121,10 @@ export default function AdminUsers() {
             </thead>
             <tbody>
               {rows.map((user) => (
-                <tr key={user.id} className="border-b border-border/60 transition-colors hover:bg-red/5">
+                <tr key={user.id} className="border-b border-border/60 transition-colors hover:bg-gold/5">
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-3">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red text-[11px] font-bold text-white">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold text-[11px] font-bold text-white">
                         {user.name
                           .split(" ")
                           .filter((part) => /^[A-Za-z]/.test(part))
@@ -146,7 +146,7 @@ export default function AdminUsers() {
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[11px] font-medium",
                         user.role === "admin"
-                          ? "border-red/50 bg-red/15 text-red-dark"
+                          ? "border-gold/50 bg-gold/15 text-gold-deep"
                           : "border-border bg-muted text-ink",
                       )}
                     >
@@ -176,7 +176,7 @@ export default function AdminUsers() {
                         "focus-ring inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-[11px] font-medium transition-colors",
                         user.active
                           ? "border-[hsl(150_42%_32%)]/40 bg-[hsl(150_42%_32%)]/12 text-[hsl(150_48%_26%)] hover:border-destructive/50 hover:text-destructive"
-                          : "border-border bg-muted text-muted-foreground hover:border-red/60 hover:text-red-dark",
+                          : "border-border bg-muted text-muted-foreground hover:border-gold/60 hover:text-gold-deep",
                       )}
                     >
                       {user.active ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}

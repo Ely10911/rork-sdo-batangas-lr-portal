@@ -50,18 +50,18 @@ export function PreviewViewer({ resource }: Props) {
           href={previewUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-red-dark"
+          className="focus-ring inline-flex items-center gap-2 rounded-sm bg-gold px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-gold-deep"
         >
           <ExternalLink className="h-4 w-4" /> Open in new tab
         </a>
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-5 bg-red/5 px-6 py-12 text-center">
-        <span className="grid h-16 w-16 place-items-center rounded-full border border-red/30 bg-red/10">
+      <div className="flex flex-col items-center justify-center gap-5 bg-gold/5 px-6 py-12 text-center">
+        <span className="grid h-16 w-16 place-items-center rounded-full border border-gold/30 bg-gold/10">
           {isVideo || isAudio ? (
-            <PlayCircle className="h-7 w-7 text-red-dark" strokeWidth={1.6} />
+            <PlayCircle className="h-7 w-7 text-gold-deep" strokeWidth={1.6} />
           ) : (
-            <FileText className="h-7 w-7 text-red-dark" strokeWidth={1.6} />
+            <FileText className="h-7 w-7 text-gold-deep" strokeWidth={1.6} />
           )}
         </span>
 
@@ -77,7 +77,7 @@ export function PreviewViewer({ resource }: Props) {
           href={previewUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring inline-flex items-center gap-2 rounded-sm border border-red/40 bg-card px-5 py-2.5 text-[14px] font-semibold text-red-dark transition-colors hover:border-red hover:bg-red/10"
+          className="focus-ring inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-card px-5 py-2.5 text-[14px] font-semibold text-gold-deep transition-colors hover:border-gold hover:bg-gold/10"
         >
           <Link2 className="h-4 w-4" /> Open resource link
         </a>

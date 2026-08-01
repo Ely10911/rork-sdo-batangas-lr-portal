@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import type { Database } from "@/integrations/supabase/types";
+
 import {
   ADMIN_CREDENTIALS,
   buildDownloadEvents,
@@ -25,7 +27,14 @@ import {
   isSupabaseConfigured,
   markCloudNotificationRead,
   removeResourceFolder,
+  rowToCollection,
+  rowToDownloadEvent,
+  rowToFeedback,
+  rowToNotification,
+  rowToPortalUser,
+  rowToResource,
   seedCloudIfEmpty,
+  subscribeToCloudChanges,
   toggleCloudBookmark,
   upsertCloudCollection,
   upsertCloudNotification,
@@ -45,8 +54,7 @@ import type {
   Session,
 } from "./types";
 
-const STORAGE_KEY = "sdo-batangas-lrms:v2";
-const VIEWER_ID = "public";
+const SESSION_KEY = "sdo-batangas-lrms:session";
 
 interface PersistedShape {
   resources: LearningResource[];
@@ -86,81 +94,69 @@ interface LrmsValue extends PersistedShape {
 
 const LrmsContext = createContext<LrmsValue | null>(null);
 
-function defaultState(): PersistedShape {
-  const resources = buildResources();
+function emptyState(): PersistedShape {
   return {
-    resources,
-    feedback: buildFeedback(resources),
+    resources: [],
+    feedback: [],
     bookmarks: [],
     collections: [],
-    notifications: buildNotifications(resources),
-    users: buildUsers(),
+    notifications: [],
+    users: [],
     session: null,
     history: [],
     extraDownloads: [],
   };
 }
 
-function loadState(): PersistedShape {
-  const base = defaultState();
-  if (typeof window === "undefined") return base;
+function loadSession(): Session | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return base;
-    const parsed = JSON.parse(raw) as Partial<PersistedShape>;
-    const resources = (parsed.resources ?? []).map((r) => ({
-      ...r,
-      storagePath: r.storagePath ?? null,
-      linkUrl: r.linkUrl ?? null,
-      schools: Array.isArray(r.schools) ? r.schools : [],
-      subOffices: Array.isArray(r.subOffices) ? r.subOffices : [],
-    }));
-    return {
-      resources: resources.length ? resources : base.resources,
-      feedback: parsed.feedback ?? base.feedback,
-      bookmarks: parsed.bookmarks ?? base.bookmarks,
-      collections: parsed.collections ?? base.collections,
-      notifications: parsed.notifications ?? base.notifications,
-      users: parsed.users ?? base.users,
-      session: parsed.session ?? null,
-      history: parsed.history ?? [],
-      extraDownloads: parsed.extraDownloads ?? [],
-    };
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as Session) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveSession(session: Session | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (session) window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    else window.localStorage.removeItem(SESSION_KEY);
   } catch (error) {
-    console.warn("LRMS: could not restore saved state, starting fresh.", error);
-    return base;
+    console.warn("LRMS: session could not be persisted.", error);
   }
 }
 
 export function LrmsProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PersistedShape>(() => loadState());
+  const [state, setState] = useState<PersistedShape>(() => ({ ...emptyState(), session: loadSession() }));
   const [cloudReady, setCloudReady] = useState<boolean>(false);
   const [cloudSyncing, setCloudSyncing] = useState<boolean>(false);
-  const hydrated = useRef<boolean>(false);
+  const mounted = useRef<boolean>(false);
 
-  // Persist to localStorage on every change (acts as an offline cache + fallback).
+  // Hydrate from the cloud on mount. The cloud is the single source of truth.
+  // Local state is only an in-memory cache that realtime updates keep in sync.
   useEffect(() => {
-    if (!hydrated.current) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (error) {
-      console.warn("LRMS: state could not be persisted.", error);
-    }
-  }, [state]);
+    if (mounted.current) return;
+    mounted.current = true;
 
-  // Hydrate from the cloud on mount. The cloud is the source of truth; the
-  // local cache is shown first so the UI renders instantly, then cloud data
-  // replaces it once loaded. If Supabase isn't configured we stay local-only.
-  useEffect(() => {
     if (!isSupabaseConfigured) {
-      hydrated.current = true;
+      const resources = buildResources();
+      setState((prev) => ({
+        ...prev,
+        resources,
+        feedback: buildFeedback(resources),
+        notifications: buildNotifications(resources),
+        users: buildUsers(),
+      }));
       setCloudReady(true);
       return;
     }
+
     let cancelled = false;
     setCloudSyncing(true);
     (async () => {
-      const seeded = defaultState().resources;
+      const seeded = buildResources();
       await seedCloudIfEmpty(seeded);
       const [resources, feedback, bookmarks, collections, notifications, users, extraDownloads] = await Promise.all([
         fetchCloudResources(),
@@ -174,50 +170,136 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       setState((prev) => ({
         ...prev,
-        resources: resources.length ? resources : prev.resources,
-        feedback: feedback.length ? feedback : prev.feedback,
-        bookmarks: bookmarks.length ? bookmarks : prev.bookmarks,
-        collections: collections.length ? collections : prev.collections,
-        notifications: notifications.length ? notifications : prev.notifications,
-        users: users.length ? users : prev.users,
+        resources,
+        feedback,
+        bookmarks,
+        collections,
+        notifications,
+        users,
         extraDownloads,
-        history: prev.history,
-        session: prev.session,
       }));
-      hydrated.current = true;
       setCloudSyncing(false);
       setCloudReady(true);
     })();
+
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const downloadEvents = useMemo<DownloadEvent[]>(
-    () => [...state.extraDownloads],
-    [state.extraDownloads],
-  );
+  // Subscribe to realtime changes so every browser/device stays in sync.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !cloudReady) return;
+
+    const refreshFor = (table: string) => {
+      switch (table) {
+        case "resources":
+          void fetchCloudResources().then((rows) => setState((prev) => ({ ...prev, resources: rows })));
+          break;
+        case "feedback":
+          void fetchCloudFeedback().then((rows) => setState((prev) => ({ ...prev, feedback: rows })));
+          break;
+        case "download_events":
+          void fetchCloudDownloadEvents().then((rows) => setState((prev) => ({ ...prev, extraDownloads: rows })));
+          break;
+        case "collections":
+          void fetchCloudCollections().then((rows) => setState((prev) => ({ ...prev, collections: rows })));
+          break;
+        case "bookmarks":
+          void fetchCloudBookmarks().then((rows) => setState((prev) => ({ ...prev, bookmarks: rows })));
+          break;
+        case "notifications":
+          void fetchCloudNotifications().then((rows) => setState((prev) => ({ ...prev, notifications: rows })));
+          break;
+        case "portal_users":
+          void fetchCloudUsers().then((rows) => setState((prev) => ({ ...prev, users: rows })));
+          break;
+      }
+    };
+
+    const unsubscribe = subscribeToCloudChanges((payload) => {
+      // Apply the individual realtime payload optimistically when possible.
+      if (payload.table === "resources" && payload.event !== "DELETE" && payload.new) {
+        const resource = rowToResource(payload.new as unknown as Database["public"]["Tables"]["resources"]["Row"]);
+        setState((prev) => {
+          const exists = prev.resources.some((r) => r.id === resource.id);
+          if (payload.event === "INSERT" || !exists) return { ...prev, resources: [resource, ...prev.resources] };
+          return { ...prev, resources: prev.resources.map((r) => (r.id === resource.id ? resource : r)) };
+        });
+      } else if (payload.table === "resources" && payload.event === "DELETE") {
+        const id = (payload.old as { id?: string })?.id;
+        if (id) setState((prev) => ({ ...prev, resources: prev.resources.filter((r) => r.id !== id) }));
+      } else if (payload.table === "feedback" && payload.event !== "DELETE" && payload.new) {
+        const feedback = rowToFeedback(payload.new as unknown as Database["public"]["Tables"]["feedback"]["Row"]);
+        setState((prev) => {
+          const exists = prev.feedback.some((f) => f.id === feedback.id);
+          if (exists) return { ...prev, feedback: prev.feedback.map((f) => (f.id === feedback.id ? feedback : f)) };
+          return { ...prev, feedback: [feedback, ...prev.feedback] };
+        });
+      } else if (payload.table === "download_events" && payload.event === "INSERT" && payload.new) {
+        const event = rowToDownloadEvent(payload.new as unknown as Database["public"]["Tables"]["download_events"]["Row"]);
+        setState((prev) => ({ ...prev, extraDownloads: [event, ...prev.extraDownloads] }));
+      } else if (payload.table === "collections" && payload.event !== "DELETE" && payload.new) {
+        const collection = rowToCollection(payload.new as unknown as Database["public"]["Tables"]["collections"]["Row"]);
+        setState((prev) => {
+          const exists = prev.collections.some((c) => c.id === collection.id);
+          if (exists) return { ...prev, collections: prev.collections.map((c) => (c.id === collection.id ? collection : c)) };
+          return { ...prev, collections: [collection, ...prev.collections] };
+        });
+      } else if (payload.table === "collections" && payload.event === "DELETE") {
+        const id = (payload.old as { id?: string })?.id;
+        if (id) setState((prev) => ({ ...prev, collections: prev.collections.filter((c) => c.id !== id) }));
+      } else if (payload.table === "bookmarks") {
+        void fetchCloudBookmarks().then((rows) => setState((prev) => ({ ...prev, bookmarks: rows })));
+      } else if (payload.table === "notifications" && payload.event !== "DELETE" && payload.new) {
+        const notification = rowToNotification(payload.new as unknown as Database["public"]["Tables"]["notifications"]["Row"]);
+        setState((prev) => {
+          const exists = prev.notifications.some((n) => n.id === notification.id);
+          if (exists) return { ...prev, notifications: prev.notifications.map((n) => (n.id === notification.id ? notification : n)) };
+          return { ...prev, notifications: [notification, ...prev.notifications] };
+        });
+      } else if (payload.table === "portal_users" && payload.event !== "DELETE" && payload.new) {
+        const user = rowToPortalUser(payload.new as unknown as Database["public"]["Tables"]["portal_users"]["Row"]);
+        setState((prev) => {
+          const exists = prev.users.some((u) => u.id === user.id);
+          if (exists) return { ...prev, users: prev.users.map((u) => (u.id === user.id ? user : u)) };
+          return { ...prev, users: [user, ...prev.users] };
+        });
+      }
+      // Full refresh after a short delay to guarantee consistency.
+      window.setTimeout(() => refreshFor(payload.table), 500);
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [cloudReady]);
+
+  const downloadEvents = useMemo<DownloadEvent[]>(() => [...state.extraDownloads], [state.extraDownloads]);
 
   const login = useCallback((username: string, password: string): boolean => {
     const ok = username.trim() === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password;
     if (ok) {
-      setState((prev) => ({
-        ...prev,
-        session: { role: "admin", name: "Division LRMS Administrator", username: ADMIN_CREDENTIALS.username },
-      }));
+      const session: Session = { role: "admin", name: "Division LRMS Administrator", username: ADMIN_CREDENTIALS.username };
+      saveSession(session);
+      setState((prev) => ({ ...prev, session }));
     }
     return ok;
   }, []);
 
   const continueAsViewer = useCallback(() => {
-    setState((prev) => ({ ...prev, session: { role: "viewer", name: "Public Viewer", username: "public" } }));
+    const session: Session = { role: "viewer", name: "Public Viewer", username: "public" };
+    saveSession(session);
+    setState((prev) => ({ ...prev, session }));
   }, []);
 
   const logout = useCallback(() => {
+    saveSession(null);
     setState((prev) => ({ ...prev, session: null }));
   }, []);
 
   const addResources = useCallback((records: LearningResource[]) => {
+    records.forEach((record) => void upsertCloudResource(record));
     setState((prev) => {
       const notifications: AppNotification[] = records
         .filter((r) => r.status === "published")
@@ -230,7 +312,6 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
           read: false,
           resourceId: r.id,
         }));
-      records.forEach((record) => void upsertCloudResource(record));
       notifications.forEach((note) => void upsertCloudNotification(note));
       return {
         ...prev,
@@ -250,16 +331,14 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteResource = useCallback((id: string) => {
-    setState((prev) => {
-      void deleteCloudResource(id);
-      void removeResourceFolder(id);
-      return {
-        ...prev,
-        resources: prev.resources.filter((r) => r.id !== id),
-        bookmarks: prev.bookmarks.filter((b) => b !== id),
-        collections: prev.collections.map((c) => ({ ...c, resourceIds: c.resourceIds.filter((r) => r !== id) })),
-      };
-    });
+    void deleteCloudResource(id);
+    void removeResourceFolder(id);
+    setState((prev) => ({
+      ...prev,
+      resources: prev.resources.filter((r) => r.id !== id),
+      bookmarks: prev.bookmarks.filter((b) => b !== id),
+      collections: prev.collections.map((c) => ({ ...c, resourceIds: c.resourceIds.filter((r) => r !== id) })),
+    }));
   }, []);
 
   const setResourceStatus = useCallback((id: string, status: ResourceStatus) => {
@@ -328,7 +407,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
         ...prev,
         resources: prev.resources.map((r) => (r.id === id ? { ...r, downloads: r.downloads + 1 } : r)),
         history: [{ resourceId: id, at }, ...prev.history.filter((h) => h.resourceId !== id)].slice(0, 40),
-        extraDownloads: [...prev.extraDownloads, event],
+        extraDownloads: [event, ...prev.extraDownloads],
       };
     });
   }, []);

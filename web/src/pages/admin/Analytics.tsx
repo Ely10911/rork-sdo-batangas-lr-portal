@@ -172,7 +172,7 @@ export default function AdminAnalytics() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.4fr_1fr]">
         <div className="plate p-5">
-          <Eyebrow className="text-red-dark">Monthly usage</Eyebrow>
+          <Eyebrow className="text-gold-deep">Monthly usage</Eyebrow>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink">Downloads vs. cumulative resource growth</h2>
           <div className="mt-4 h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -206,7 +206,7 @@ export default function AdminAnalytics() {
         </div>
 
         <div className="plate p-5">
-          <Eyebrow className="text-red-dark">Learning area trends</Eyebrow>
+          <Eyebrow className="text-gold-deep">Learning area trends</Eyebrow>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink">Demand profile</h2>
           <div className="mt-2 h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -229,7 +229,7 @@ export default function AdminAnalytics() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <div className="plate p-5">
-          <Eyebrow className="flex items-center gap-1.5 text-red-dark">
+          <Eyebrow className="flex items-center gap-1.5 text-gold-deep">
             <MapPinned className="h-3.5 w-3.5" /> Geographic reach
           </Eyebrow>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink">Downloads by sub-office</h2>
@@ -252,7 +252,7 @@ export default function AdminAnalytics() {
 
         <div className="plate overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-4 py-3">
-            <Building2 className="h-3.5 w-3.5 text-red-dark" />
+            <Building2 className="h-3.5 w-3.5 text-gold-deep" />
             <Eyebrow className="text-ink">Downloads by school (top 10)</Eyebrow>
           </div>
           <ol className="divide-y divide-border/60">
@@ -260,12 +260,12 @@ export default function AdminAnalytics() {
               const max = bySchool[0]?.downloads || 1;
               return (
                 <li key={row.school} className="flex items-center gap-3 px-4 py-2.5">
-                  <span className="tabular w-5 font-display text-sm font-bold text-red-dark/70">{i + 1}</span>
+                  <span className="tabular w-5 font-display text-sm font-bold text-gold-deep/70">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12.5px] font-medium text-ink">{row.school}</p>
                     <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-red-deep to-red transition-all duration-700"
+                        className="h-full rounded-full bg-gradient-to-r from-gold-deep to-gold transition-all duration-700"
                         style={{ width: `${(row.downloads / max) * 100}%` }}
                       />
                     </div>
@@ -323,7 +323,7 @@ function RankPanel({
     <div className="plate overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-4 py-3">
         {tone === "up" ? (
-          <TrendingUp className="h-3.5 w-3.5 text-red-dark" />
+          <TrendingUp className="h-3.5 w-3.5 text-gold-deep" />
         ) : (
           <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />
         )}
@@ -333,7 +333,7 @@ function RankPanel({
         {rows.map((row) => (
           <li key={row.id} className="flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <Link to={`/resource/${row.id}`} className="block truncate text-[13px] font-medium text-ink hover:text-red-dark">
+              <Link to={`/resource/${row.id}`} className="block truncate text-[13px] font-medium text-ink hover:text-gold-deep">
                 {row.title}
               </Link>
               <p className="truncate text-[11px] text-muted-foreground">{row.meta}</p>

@@ -228,7 +228,6 @@ export type Database = {
           featured: boolean
           file_kind: string
           file_name: string
-          file_size_kb: number
           grade_level: string
           id: string
           key_stage: string
@@ -271,7 +270,6 @@ export type Database = {
           featured?: boolean
           file_kind: string
           file_name: string
-          file_size_kb?: number
           grade_level: string
           id: string
           key_stage?: string
@@ -314,7 +312,6 @@ export type Database = {
           featured?: boolean
           file_kind?: string
           file_name?: string
-          file_size_kb?: number
           grade_level?: string
           id?: string
           key_stage?: string

@@ -54,7 +54,7 @@ function FilterSelect({
         <SelectTrigger
           className={cn(
             "h-9 rounded-sm border-input bg-card text-[13px] text-ink",
-            dirty && "border-red/70 bg-red/8 font-medium",
+            dirty && "border-gold/70 bg-gold/8 font-medium",
           )}
         >
           <SelectValue placeholder={anyLabel} />
@@ -97,10 +97,10 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
     <div className={cn("plate overflow-hidden", className)}>
       <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-3">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-red-dark" strokeWidth={1.8} />
+          <SlidersHorizontal className="h-4 w-4 text-gold-deep" strokeWidth={1.8} />
           <Eyebrow className="text-ink">Refine results</Eyebrow>
           {count > 0 && (
-            <span className="tabular rounded-full bg-red px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            <span className="tabular rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-semibold text-white">
               {count}
             </span>
           )}
@@ -108,7 +108,7 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
         <button
           type="button"
           onClick={onReset}
-          className="focus-ring inline-flex items-center gap-1 rounded-sm text-[11px] font-medium text-muted-foreground transition-colors hover:text-red-dark"
+          className="focus-ring inline-flex items-center gap-1 rounded-sm text-[11px] font-medium text-muted-foreground transition-colors hover:text-gold-deep"
         >
           <RotateCcw className="h-3 w-3" /> Reset
         </button>
@@ -231,7 +231,7 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
             placeholder="e.g. EN7RC-Ia"
             className={cn(
               "h-9 rounded-sm border-input bg-card font-mono text-[12px]",
-              filters.competencyCode && "border-red/70 bg-red/8",
+              filters.competencyCode && "border-gold/70 bg-gold/8",
             )}
           />
         </label>

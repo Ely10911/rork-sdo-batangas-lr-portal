@@ -164,7 +164,7 @@ function MultiSelect({
               key={value}
               type="button"
               onClick={() => toggle(value)}
-              className="focus-ring inline-flex items-center gap-1 rounded-sm bg-red/15 px-2 py-1 text-[12px] font-medium text-red-dark hover:bg-red/25"
+              className="focus-ring inline-flex items-center gap-1 rounded-sm bg-gold/15 px-2 py-1 text-[12px] font-medium text-gold-deep hover:bg-gold/25"
             >
               {value}
               <X className="h-3 w-3" />
@@ -198,13 +198,13 @@ function MultiSelect({
               onClick={() => toggle(option)}
               className={cn(
                 "flex w-full items-center gap-2 border-b border-border/40 px-3 py-2 text-left text-[13px] transition-colors last:border-b-0",
-                isSel ? "bg-red/10 text-red-dark" : "text-ink hover:bg-muted",
+                isSel ? "bg-gold/10 text-gold-deep" : "text-ink hover:bg-muted",
               )}
             >
               <span
                 className={cn(
                   "grid h-4 w-4 shrink-0 place-items-center rounded-sm border",
-                  isSel ? "border-red bg-red text-white" : "border-border",
+                  isSel ? "border-gold bg-gold text-white" : "border-border",
                 )}
               >
                 {isSel && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -379,8 +379,8 @@ export default function AdminUpload() {
         <div className="space-y-5">
           {/* Add resource button */}
           <div className="plate flex flex-col items-center justify-center gap-3 border-dashed px-6 py-10 text-center">
-            <span className="grid h-14 w-14 place-items-center rounded-full border border-red/50 bg-red/8">
-              <Link2 className="h-6 w-6 text-red-dark" strokeWidth={1.7} />
+            <span className="grid h-14 w-14 place-items-center rounded-full border border-gold/50 bg-gold/8">
+              <Link2 className="h-6 w-6 text-gold-deep" strokeWidth={1.7} />
             </span>
             <h2 className="font-display text-xl font-semibold text-ink">Add learning resource by link</h2>
             <p className="max-w-md text-[14px] text-muted-foreground">
@@ -390,7 +390,7 @@ export default function AdminUpload() {
             <button
               type="button"
               onClick={addResource}
-              className="focus-ring mt-1 inline-flex items-center gap-2 rounded-sm bg-red px-4 py-2.5 text-[14px] font-semibold text-white hover:bg-red-dark"
+              className="focus-ring mt-1 inline-flex items-center gap-2 rounded-sm bg-gold px-4 py-2.5 text-[14px] font-semibold text-white hover:bg-gold-deep"
             >
               <Plus className="h-4 w-4" /> Add resource
             </button>
@@ -406,7 +406,7 @@ export default function AdminUpload() {
                     type="button"
                     onClick={() => void commit("draft")}
                     disabled={committing}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink disabled:opacity-60"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-gold/25 bg-card px-3 py-1.5 text-[13px] font-medium text-ink disabled:opacity-60"
                   >
                     <Save className="h-3.5 w-3.5" /> {committing ? "Saving…" : "Save as draft"}
                   </button>
@@ -414,7 +414,7 @@ export default function AdminUpload() {
                     type="button"
                     onClick={() => void commit("pending")}
                     disabled={committing}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-red/60 bg-red/15 px-3 py-1.5 text-[13px] font-medium text-red-dark disabled:opacity-60"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm border border-gold/60 bg-gold/15 px-3 py-1.5 text-[13px] font-medium text-gold-deep disabled:opacity-60"
                   >
                     <Send className="h-3.5 w-3.5" /> {committing ? "Submitting…" : "Submit for QA"}
                   </button>
@@ -422,7 +422,7 @@ export default function AdminUpload() {
                     type="button"
                     onClick={() => void commit("published")}
                     disabled={committing}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-red px-3 py-1.5 text-[13px] font-semibold text-white disabled:opacity-60"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-sm bg-gold px-3 py-1.5 text-[13px] font-semibold text-white disabled:opacity-60"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" /> {committing ? "Publishing…" : "Publish now"}
                   </button>
@@ -679,7 +679,7 @@ export default function AdminUpload() {
                           setResourceStatus(resource.id, "pending");
                           toast.success("Draft submitted for quality assurance");
                         }}
-                        className="focus-ring rounded-sm border border-red/60 bg-red/15 px-2.5 py-1.5 text-[12px] font-medium text-red-dark"
+                        className="focus-ring rounded-sm border border-gold/60 bg-gold/15 px-2.5 py-1.5 text-[12px] font-medium text-gold-deep"
                       >
                         Submit for QA
                       </button>
@@ -690,7 +690,7 @@ export default function AdminUpload() {
                         setResourceStatus(resource.id, "published");
                         toast.success("Resource published");
                       }}
-                      className="focus-ring rounded-sm bg-red px-2.5 py-1.5 text-[12px] font-semibold text-white"
+                      className="focus-ring rounded-sm bg-gold px-2.5 py-1.5 text-[12px] font-semibold text-white"
                     >
                       Publish
                     </button>
@@ -798,7 +798,7 @@ export default function AdminUpload() {
                 type="button"
                 onClick={applyBatchToAll}
                 disabled={staged.length === 0}
-                className="focus-ring w-full rounded-sm border border-red/25 bg-card px-3 py-2 text-[13px] font-semibold text-ink disabled:opacity-50"
+                className="focus-ring w-full rounded-sm border border-gold/25 bg-card px-3 py-2 text-[13px] font-semibold text-ink disabled:opacity-50"
               >
                 Apply to all staged resources
               </button>

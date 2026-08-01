@@ -73,20 +73,20 @@ export default function Home() {
   return (
     <PortalShell>
       {/* Hero */}
-      <section className="red-panel relative overflow-hidden">
+      <section className="ink-panel relative overflow-hidden">
         <div className="grid-lines absolute inset-0 opacity-70" />
-        <div className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-red/10 blur-[100px]" />
-        <div className="pointer-events-none absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-red-soft/15 blur-[90px]" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-gold/10 blur-[100px]" />
+        <div className="pointer-events-none absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-gold-soft/15 blur-[90px]" />
 
         <div className="container relative py-16 md:py-24">
           <div className="max-w-3xl">
             <div className="flex animate-fade-in items-center gap-3">
-              <span className="rule-red w-10" />
-              <Eyebrow className="text-red-soft">Learning Resource Management System</Eyebrow>
+              <span className="rule-gold w-10" />
+              <Eyebrow className="text-gold-soft">Learning Resource Management System</Eyebrow>
             </div>
             <h1 className="mt-5 animate-fade-rise font-display text-4xl font-bold leading-[1.05] tracking-tight text-white md:text-6xl">
               Every quality-assured learning resource of Batangas,
-              <span className="text-red"> in one archive.</span>
+              <span className="text-gold"> in one archive.</span>
             </h1>
             <p className="mt-5 max-w-2xl animate-fade-rise text-[15px] leading-relaxed text-white/70 md:text-base">
               Search, preview and download modules, activity sheets, video lessons and contextualized materials mapped
@@ -111,7 +111,7 @@ export default function Home() {
                       setQuery(chip);
                       runSearch(chip);
                     }}
-                    className="focus-ring rounded-full border border-white/20 px-3 py-1 text-[11px] text-white/70 transition-colors hover:border-red/60 hover:text-red-soft"
+                    className="focus-ring rounded-full border border-white/20 px-3 py-1 text-[11px] text-white/70 transition-colors hover:border-gold/60 hover:text-gold-soft"
                   >
                     {chip}
                   </button>
@@ -129,8 +129,8 @@ export default function Home() {
             ].map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="red-panel px-5 py-5">
-                  <Icon className="h-4 w-4 text-red" strokeWidth={1.8} />
+                <div key={stat.label} className="ink-panel px-5 py-5">
+                  <Icon className="h-4 w-4 text-gold" strokeWidth={1.8} />
                   <dd className="tabular mt-3 font-display text-3xl font-bold text-white">
                     {formatNumber(stat.value)}
                   </dd>
@@ -144,10 +144,10 @@ export default function Home() {
 
       {/* Curriculum ticker */}
       {curriculumNote && (
-        <section className="border-b border-red/30 bg-red/12">
+        <section className="border-b border-gold/30 bg-gold/12">
           <div className="container flex items-center gap-3 py-3">
-            <span className="flex shrink-0 items-center gap-2 rounded-sm bg-red px-2 py-1">
-              <Megaphone className="h-3.5 w-3.5 text-red" strokeWidth={2} />
+            <span className="flex shrink-0 items-center gap-2 rounded-sm bg-gold px-2 py-1">
+              <Megaphone className="h-3.5 w-3.5 text-gold" strokeWidth={2} />
               <span className="eyebrow text-white">Advisory</span>
             </span>
             <p className="min-w-0 flex-1 truncate text-[13px] text-ink">
@@ -168,7 +168,7 @@ export default function Home() {
           action={
             <Link
               to="/browse"
-              className="focus-ring inline-flex items-center gap-1.5 rounded-sm text-[13px] font-semibold text-red-dark hover:underline"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-sm text-[13px] font-semibold text-gold-deep hover:underline"
             >
               Open full catalog <ArrowRight className="h-4 w-4" />
             </Link>
@@ -183,12 +183,12 @@ export default function Home() {
               className={`plate card-hover group relative animate-fade-rise overflow-hidden p-4`}
             >
               <span
-                className={`absolute inset-0 bg-gradient-to-br ${AREA_ACCENT[area] ?? "from-red/15"} to-transparent opacity-70`}
+                className={`absolute inset-0 bg-gradient-to-br ${AREA_ACCENT[area] ?? "from-gold/15"} to-transparent opacity-70`}
               />
               <span className="relative flex h-full flex-col">
                 <span className="tabular font-display text-2xl font-bold text-ink">{areaCounts[area] ?? 0}</span>
                 <span className="mt-1 text-[13px] font-semibold leading-snug text-ink">{area}</span>
-                <span className="mt-3 inline-flex items-center gap-1 text-[11px] text-red-dark opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="mt-3 inline-flex items-center gap-1 text-[11px] text-gold-deep opacity-0 transition-opacity group-hover:opacity-100">
                   Browse <ArrowRight className="h-3 w-3" />
                 </span>
               </span>
@@ -202,7 +202,7 @@ export default function Home() {
             <Link
               key={grade}
               to={`/browse?grade=${encodeURIComponent(grade)}`}
-              className="focus-ring rounded-sm border border-border bg-card px-2.5 py-1 text-[12px] text-ink transition-colors hover:border-red hover:text-red-dark"
+              className="focus-ring rounded-sm border border-border bg-card px-2.5 py-1 text-[12px] text-ink transition-colors hover:border-gold hover:text-gold-deep"
             >
               {grade === "Kindergarten" ? "Kinder" : grade.replace("Grade ", "G")}
             </Link>
@@ -228,14 +228,14 @@ export default function Home() {
             title="Most downloaded resources"
             action={
               <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                <Flame className="h-3.5 w-3.5 text-red-dark" /> updated live
+                <Flame className="h-3.5 w-3.5 text-gold-deep" /> updated live
               </span>
             }
           />
           <div className="plate overflow-hidden">
             {trending.map((resource, i) => (
               <div key={resource.id} className="flex items-center">
-                <span className="tabular w-10 shrink-0 pl-4 font-display text-lg font-bold text-red-dark/60">
+                <span className="tabular w-10 shrink-0 pl-4 font-display text-lg font-bold text-gold-deep/60">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -251,7 +251,7 @@ export default function Home() {
           <ol className="plate divide-y divide-border/70 overflow-hidden">
             {newest.map((resource) => (
               <li key={resource.id}>
-                <Link to={`/resource/${resource.id}`} className="block px-4 py-3.5 transition-colors hover:bg-red/6">
+                <Link to={`/resource/${resource.id}`} className="block px-4 py-3.5 transition-colors hover:bg-gold/6">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-[10px] tracking-[0.12em] text-muted-foreground">{resource.id}</span>
                     <span className="text-[11px] text-muted-foreground">{formatRelative(resource.dateUploaded)}</span>
@@ -261,7 +261,7 @@ export default function Home() {
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <MetaChip>{resource.gradeLevel}</MetaChip>
-                    <MetaChip tone="red">{resource.resourceType}</MetaChip>
+                    <MetaChip tone="gold">{resource.resourceType}</MetaChip>
                   </div>
                 </Link>
               </li>
@@ -270,7 +270,7 @@ export default function Home() {
 
           <div className="plate mt-4 overflow-hidden">
             <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
-              <Sparkles className="h-3.5 w-3.5 text-red-dark" />
+              <Sparkles className="h-3.5 w-3.5 text-gold-deep" />
               <Eyebrow className="text-ink">For teachers</Eyebrow>
             </div>
             <div className="space-y-3 p-4 text-[13px] leading-relaxed text-muted-foreground">
@@ -280,7 +280,7 @@ export default function Home() {
               </p>
               <Link
                 to="/library"
-                className="focus-ring inline-flex items-center gap-1.5 rounded-sm text-[13px] font-semibold text-red-dark hover:underline"
+                className="focus-ring inline-flex items-center gap-1.5 rounded-sm text-[13px] font-semibold text-gold-deep hover:underline"
               >
                 Open my library <ArrowRight className="h-3.5 w-3.5" />
               </Link>
