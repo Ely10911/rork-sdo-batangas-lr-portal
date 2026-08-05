@@ -402,6 +402,95 @@ export async function upsertCloudUser(user: PortalUser): Promise<void> {
   if (error) console.warn("LRMS cloud: upsert portal_user failed", error.message);
 }
 
+/* --------------------------------- visitors ---------------------------------- */
+
+const VISITOR_ID_KEY = "sdo-batangas-lrms:visitor-id";
+
+/** Get or create a persistent visitor ID for this browser. */
+export function getOrCreateVisitorId(): string {
+  if (typeof window === "undefined") return "visitor-anon";
+  try {
+    let id = window.localStorage.getItem(VISITOR_ID_KEY);
+    if (!id) {
+      id = `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      window.localStorage.setItem(VISITOR_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "visitor-anon";
+  }
+}
+
+/** Count total unique visitors ever recorded. */
+export async function fetchCloudVisitorCount(): Promise<number> {
+  if (!supabase) return 0;
+  const { count, error } = await supabase
+    .from("portal_users")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "visitor");
+  if (error) {
+    console.warn("LRMS cloud: fetch visitor count failed", error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+/** Register a visitor session and update their last-active timestamp. */
+export async function heartbeatVisitor(visitorId: string): Promise<void> {
+  if (!supabase) return;
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("portal_users").upsert({
+    id: visitorId,
+    name: "Anonymous Visitor",
+    username: visitorId,
+    role: "visitor",
+    school: "",
+    sub_office: "",
+    last_active: now,
+    active: true,
+  });
+  if (error) console.warn("LRMS cloud: visitor heartbeat failed", error.message);
+}
+
+/* --------------------------------- presence ---------------------------------- */
+
+export type PresenceState = Record<string, { visitorId: string; joinedAt: string }>;
+
+export type PresenceCallback = (activeCount: number) => void;
+
+/** Subscribe to real-time presence for active user counting. */
+export function subscribeToPresence(visitorId: string, onChange: PresenceCallback): (() => void) | undefined {
+  if (!supabase) return undefined;
+
+  const channel = supabase.channel("lrms-presence", {
+    config: { presence: { key: visitorId } },
+  });
+
+  channel
+    .on("presence", { event: "sync" }, () => {
+      const state = channel.presenceState() as unknown as PresenceState;
+      onChange(Object.keys(state).length);
+    })
+    .on("presence", { event: "join" }, () => {
+      const state = channel.presenceState() as unknown as PresenceState;
+      onChange(Object.keys(state).length);
+    })
+    .on("presence", { event: "leave" }, () => {
+      const state = channel.presenceState() as unknown as PresenceState;
+      onChange(Object.keys(state).length);
+    })
+    .subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await channel.track({ visitorId, joinedAt: new Date().toISOString() });
+      }
+    });
+
+  return () => {
+    void channel.untrack();
+    void supabase?.removeChannel(channel);
+  };
+}
+
 /* ---------------------------------- realtime -------------------------------- */
 
 export type CloudRefresh = () => void;

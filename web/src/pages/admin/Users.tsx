@@ -20,6 +20,8 @@ export default function AdminUsers() {
   const rows = useMemo(
     () =>
       users.filter((user) => {
+        // Hide auto-logged visitor rows from the management table
+        if (user.role === "visitor") return false;
         if (office !== "all" && user.subOffice !== office) return false;
         if (role !== "all" && user.role !== role) return false;
         if (query.trim()) {
@@ -43,7 +45,7 @@ export default function AdminUsers() {
     return counts;
   }, [resources]);
 
-  const active = users.filter((u) => u.active).length;
+  const active = users.filter((u) => u.role !== "visitor" && u.active).length;
   const admins = users.filter((u) => u.role === "admin").length;
 
   return (

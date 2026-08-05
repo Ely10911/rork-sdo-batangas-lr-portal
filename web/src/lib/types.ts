@@ -6,7 +6,7 @@ export type ResourceStatus = "published" | "pending" | "draft" | "archived";
 
 export type Quarter = "All Quarters" | "Quarter 1" | "Quarter 2" | "Quarter 3" | "Quarter 4";
 
-export type UserRole = "admin" | "viewer";
+export type UserRole = "admin" | "viewer" | "visitor";
 
 /** A single uploaded revision of a resource file. */
 export interface ResourceVersion {

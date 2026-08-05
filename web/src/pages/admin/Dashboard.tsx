@@ -21,6 +21,7 @@ import {
   Download,
   Eye,
   FileStack,
+  Radio,
   Star,
   UploadCloud,
   Users,
@@ -99,7 +100,7 @@ const tooltipStyle = {
 };
 
 export default function AdminDashboard() {
-  const { resources, users, downloadEvents, feedback } = useLrms();
+  const { resources, users, downloadEvents, feedback, activeUsers, totalVisitors } = useLrms();
   const ratings = useRatingIndex();
 
   const published = useMemo(() => resources.filter((r) => r.status === "published"), [resources]);
@@ -198,6 +199,43 @@ export default function AdminDashboard() {
         <StatTile label="Average rating" value={totals.avgRating.toFixed(2)} icon={Star} />
         <StatTile label="Awaiting QA review" value={formatNumber(pending.length)} icon={Clock3} />
         <StatTile label="Drafts in progress" value={formatNumber(drafts.length)} icon={UploadCloud} />
+      </div>
+
+      {/* Live visitor tracking */}
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+        <div className="plate relative overflow-hidden p-5 border-gold/40">
+          <div className="hatch pointer-events-none absolute inset-0 opacity-30" />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Active users right now</p>
+              <p className="tabular mt-2 font-display text-4xl font-bold text-ink">{formatNumber(activeUsers)}</p>
+              <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-medium text-[hsl(150_48%_28%)]">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[hsl(150_52%_45%)] opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[hsl(150_52%_38%)]" />
+                </span>
+                Live · real-time presence
+              </p>
+            </div>
+            <span className="grid h-11 w-11 place-items-center rounded-sm border border-gold/50 bg-gold/20 text-gold-deep">
+              <Radio className="h-5 w-5" strokeWidth={1.9} />
+            </span>
+          </div>
+        </div>
+
+        <div className="plate relative overflow-hidden p-5">
+          <div className="hatch pointer-events-none absolute inset-0 opacity-30" />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Total unique visitors</p>
+              <p className="tabular mt-2 font-display text-4xl font-bold text-ink">{formatNumber(totalVisitors)}</p>
+              <p className="mt-1 text-[11px] font-medium text-muted-foreground">All-time site visits logged</p>
+            </div>
+            <span className="grid h-11 w-11 place-items-center rounded-sm border border-border bg-muted text-ink">
+              <Users className="h-5 w-5" strokeWidth={1.9} />
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-5 xl:grid-cols-[1.5fr_1fr]">

@@ -20,6 +20,9 @@ import {
   fetchCloudNotifications,
   fetchCloudResources,
   fetchCloudUsers,
+  fetchCloudVisitorCount,
+  getOrCreateVisitorId,
+  heartbeatVisitor,
   incrementCloudDownloads,
   incrementCloudViews,
   insertCloudDownloadEvent,
@@ -35,6 +38,7 @@ import {
   rowToResource,
   seedCloudIfEmpty,
   subscribeToCloudChanges,
+  subscribeToPresence,
   toggleCloudBookmark,
   upsertCloudCollection,
   upsertCloudNotification,
@@ -72,6 +76,10 @@ interface LrmsValue extends PersistedShape {
   downloadEvents: DownloadEvent[];
   cloudReady: boolean;
   cloudSyncing: boolean;
+  /** Number of users currently online (real-time Presence). */
+  activeUsers: number;
+  /** Total unique visitors ever recorded. */
+  totalVisitors: number;
   login: (username: string, password: string) => boolean;
   continueAsViewer: () => void;
   logout: () => void;
@@ -132,6 +140,8 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedShape>(() => ({ ...emptyState(), session: loadSession() }));
   const [cloudReady, setCloudReady] = useState<boolean>(false);
   const [cloudSyncing, setCloudSyncing] = useState<boolean>(false);
+  const [activeUsers, setActiveUsers] = useState<number>(0);
+  const [totalVisitors, setTotalVisitors] = useState<number>(0);
   const mounted = useRef<boolean>(false);
 
   // Hydrate from the cloud on mount. The cloud is the single source of truth.
@@ -276,6 +286,43 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
   }, [cloudReady]);
 
   const downloadEvents = useMemo<DownloadEvent[]>(() => [...state.extraDownloads], [state.extraDownloads]);
+
+  // Visitor tracking: heartbeat + real-time presence for active user count.
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    const visitorId = getOrCreateVisitorId();
+
+    // Register/heartbeat this visitor immediately.
+    void heartbeatVisitor(visitorId);
+    void fetchCloudVisitorCount().then(setTotalVisitors);
+
+    // Re-heartbeat every 60 seconds so last_active stays fresh.
+    const heartbeatInterval = window.setInterval(() => {
+      void heartbeatVisitor(visitorId);
+    }, 60_000);
+
+    // Subscribe to real-time presence for active user count.
+    const unsubscribePresence = subscribeToPresence(visitorId, (count) => {
+      setActiveUsers(count);
+    });
+
+    // Refresh total visitor count periodically.
+    const visitorCountInterval = window.setInterval(() => {
+      void fetchCloudVisitorCount().then(setTotalVisitors);
+    }, 30_000);
+
+    // Also heartbeat on tab refocus.
+    const handleFocus = () => void heartbeatVisitor(visitorId);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.clearInterval(heartbeatInterval);
+      window.clearInterval(visitorCountInterval);
+      window.removeEventListener("focus", handleFocus);
+      unsubscribePresence?.();
+    };
+  }, []);
 
   const login = useCallback((username: string, password: string): boolean => {
     const ok = username.trim() === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password;
@@ -509,6 +556,8 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       downloadEvents,
       cloudReady,
       cloudSyncing,
+      activeUsers,
+      totalVisitors,
       login,
       continueAsViewer,
       logout,
@@ -533,6 +582,8 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       downloadEvents,
       cloudReady,
       cloudSyncing,
+      activeUsers,
+      totalVisitors,
       login,
       continueAsViewer,
       logout,

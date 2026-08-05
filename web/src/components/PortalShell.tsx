@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useMemo } from "react";
-import { BookMarked, Compass, LayoutDashboard, LibraryBig, LogOut, ShieldCheck } from "lucide-react";
+import { BookMarked, Compass, LayoutDashboard, LibraryBig, LogOut, Radio, ShieldCheck } from "lucide-react";
 
 import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ function DivisionSeal({ className }: { className?: string }) {
 }
 
 export function PortalShell({ children }: { children: React.ReactNode }) {
-  const { session, logout, resources, bookmarks } = useLrms();
+  const { session, logout, resources, bookmarks, activeUsers, totalVisitors } = useLrms();
   const location = useLocation();
 
   const published = useMemo(() => resources.filter((r) => r.status === "published"), [resources]);
@@ -49,6 +49,21 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
           <p className="eyebrow hidden sm:block">
             {formatNumber(published.length)} published LRs · {formatNumber(totalDownloads)} downloads
           </p>
+          {activeUsers > 0 && (
+            <p className="eyebrow hidden items-center gap-1.5 text-gold-soft sm:flex">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
+              </span>
+              {formatNumber(activeUsers)} online now · {formatNumber(totalVisitors)} total visitors
+            </p>
+          )}
+          {activeUsers === 0 && totalVisitors > 0 && (
+            <p className="eyebrow hidden sm:block">
+              <Radio className="mr-1 inline h-3 w-3 text-gold/60" />
+              {formatNumber(totalVisitors)} total visitors
+            </p>
+          )}
         </div>
       </div>
 
