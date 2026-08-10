@@ -84,6 +84,7 @@ export const RESOURCE_TYPES: string[] = [
   "Instructional Poster",
   "Curriculum Guide",
   "Supplementary Reading Material",
+  "Kasaysayan",
 ];
 
 export const FILE_KINDS: FileKind[] = ["pdf", "docx", "pptx", "epub", "video", "audio", "image"];
