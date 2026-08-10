@@ -8,11 +8,13 @@ import {
   ScrollText,
   UploadCloud,
   Users,
+  ExternalLink,
 } from "lucide-react";
 
 import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 import { useLrms } from "@/lib/store";
+import { LEGACY_LR_URL } from "@/lib/taxonomy";
 
 const ADMIN_NAV = [
   { to: "/admin", label: "Dashboard", icon: Gauge, end: true },
@@ -87,6 +89,14 @@ export function AdminShell({
           >
             <Globe className="h-4 w-4" strokeWidth={1.8} /> View public portal
           </Link>
+          <a
+            href={LEGACY_LR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring mt-1 flex items-center gap-3 rounded-sm px-3 py-2 text-[13px] text-white/70 transition-colors hover:text-gold-soft"
+          >
+            <ExternalLink className="h-4 w-4" strokeWidth={1.8} /> Legacy LR portal (Wix)
+          </a>
           <button
             type="button"
             onClick={logout}

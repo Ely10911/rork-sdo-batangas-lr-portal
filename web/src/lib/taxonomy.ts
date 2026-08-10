@@ -4,6 +4,9 @@ import type { FileKind, Quarter } from "./types";
 
 export const DIVISION = "Schools Division Office of Batangas";
 
+/** URL of the previous Wix-based learning resource portal. */
+export const LEGACY_LR_URL = "https://sdobatangaslrmds.wixsite.com/sdobatangaslrportal";
+
 export const LEARNING_AREAS: string[] = [
   "Filipino",
   "English",

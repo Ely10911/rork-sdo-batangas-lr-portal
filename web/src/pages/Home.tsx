@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Download, FileStack, Flame, Megaphone, Sparkles, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, Download, ExternalLink, FileStack, Flame, Megaphone, Sparkles, TrendingUp, Users } from "lucide-react";
 
 import { PortalShell } from "@/components/PortalShell";
 import { SearchCommand } from "@/components/SearchCommand";
@@ -8,7 +8,7 @@ import { ResourceCard } from "@/components/ResourceCard";
 import { Eyebrow, MetaChip, SectionHeading } from "@/components/atoms";
 import { useLrms } from "@/lib/store";
 import { formatNumber, formatRelative } from "@/lib/format";
-import { GRADE_LEVELS, LEARNING_AREAS } from "@/lib/taxonomy";
+import { GRADE_LEVELS, LEARNING_AREAS, LEGACY_LR_URL } from "@/lib/taxonomy";
 
 const AREA_ACCENT: Record<string, string> = {
   Filipino: "from-[hsl(8_58%_44%)]/18",
@@ -139,6 +139,32 @@ export default function Home() {
               );
             })}
           </dl>
+        </div>
+      </section>
+
+      {/* Legacy portal notice */}
+      <section className="border-b border-border bg-muted/30">
+        <div className="container flex flex-wrap items-center justify-between gap-3 py-2.5">
+          <p className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <ExternalLink className="h-3.5 w-3.5 text-gold-deep" strokeWidth={1.8} />
+            <span>Looking for the old portal? Visit the</span>
+            <a
+              href={LEGACY_LR_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-gold-deep underline-offset-2 hover:underline"
+            >
+              legacy SDO Batangas LR portal
+            </a>
+          </p>
+          <a
+            href={LEGACY_LR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden items-center gap-1.5 rounded-sm border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-ink transition-colors hover:border-gold hover:text-gold-deep sm:inline-flex"
+          >
+            Open legacy site <ExternalLink className="h-3 w-3" />
+          </a>
         </div>
       </section>
 

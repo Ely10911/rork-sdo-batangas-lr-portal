@@ -5,7 +5,7 @@ import { BookMarked, Compass, LayoutDashboard, LibraryBig, LogOut, Radio, Shield
 import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 import { useLrms } from "@/lib/store";
-import { DIVISION } from "@/lib/taxonomy";
+import { DIVISION, LEGACY_LR_URL } from "@/lib/taxonomy";
 import { formatNumber } from "@/lib/format";
 
 const NAV = [
@@ -190,6 +190,16 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
                 <Link to="/login" className="transition-colors hover:text-gold-soft">
                   Administrator login
                 </Link>
+              </li>
+              <li>
+                <a
+                  href={LEGACY_LR_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-gold-soft"
+                >
+                  Legacy LR portal (Wix)
+                </a>
               </li>
             </ul>
           </div>
