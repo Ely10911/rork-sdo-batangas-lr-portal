@@ -10,6 +10,7 @@ import type {
   LearningResource,
   NotificationKind,
   PortalUser,
+  ResourceAuthor,
   ResourceStatus,
   ResourceVersion,
 } from "./types";
@@ -56,6 +57,23 @@ function asStringArray(value: unknown): string[] {
   return [];
 }
 
+/** Parse the authors jsonb column, falling back to the legacy scalar author. */
+function asAuthors(value: unknown, legacyAuthor: string): ResourceAuthor[] {
+  if (Array.isArray(value)) {
+    const list = value
+      .filter((a): a is Record<string, unknown> => typeof a === "object" && a !== null)
+      .map((a) => ({
+        name: typeof a.name === "string" ? a.name : "",
+        position: typeof a.position === "string" ? a.position : "",
+        school: typeof a.school === "string" ? a.school : "",
+        subOffice: typeof a.subOffice === "string" ? a.subOffice : "",
+      }))
+      .filter((a) => a.name);
+    if (list.length > 0) return list;
+  }
+  return legacyAuthor ? [{ name: legacyAuthor, position: "", school: "", subOffice: "" }] : [];
+}
+
 export function rowToResource(row: ResourceRow): LearningResource {
   const versions = Array.isArray(row.versions) ? (row.versions as unknown as ResourceVersion[]) : [];
   // Handle both legacy single-value columns and new array columns
@@ -63,6 +81,9 @@ export function rowToResource(row: ResourceRow): LearningResource {
   const rawSubOffices = (row as Record<string, unknown>).sub_offices;
   const legacySchool = typeof row.school === "string" ? row.school : "";
   const legacySubOffice = typeof row.sub_office === "string" ? row.sub_office : "";
+  const rawWeek = (row as Record<string, unknown>).week;
+  const rawAuthors = (row as Record<string, unknown>).authors;
+  const authors = asAuthors(rawAuthors, row.author);
 
   return {
     id: row.id,
@@ -83,7 +104,10 @@ export function rowToResource(row: ResourceRow): LearningResource {
     pages: row.pages,
     durationSec: row.duration_sec,
     language: row.language,
-    author: row.author,
+    author: authors[0]?.name ?? row.author,
+    position: authors[0]?.position ?? "",
+    week: typeof rawWeek === "string" && rawWeek ? rawWeek : "All Weeks",
+    authors,
     schools: asStringArray(rawSchools).length > 0 ? asStringArray(rawSchools) : legacySchool ? [legacySchool] : [],
     subOffices: asStringArray(rawSubOffices).length > 0 ? asStringArray(rawSubOffices) : legacySubOffice ? [legacySubOffice] : [],
     division: row.division ?? "",
@@ -124,7 +148,9 @@ export function resourceToInsert(resource: LearningResource): ResourceInsert {
     pages: resource.pages,
     duration_sec: resource.durationSec,
     language: resource.language,
-    author: resource.author,
+    author: resource.authors[0]?.name || resource.author,
+    week: resource.week || "All Weeks",
+    authors: resource.authors as unknown as Database["public"]["Tables"]["resources"]["Insert"]["authors"],
     schools: resource.schools,
     sub_offices: resource.subOffices,
     division: resource.division,
@@ -286,8 +312,18 @@ export async function fetchCloudBookmarks(): Promise<string[]> {
 
 export async function upsertCloudResource(resource: LearningResource): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from("resources").upsert(resourceToInsert(resource));
-  if (error) console.warn("LRMS cloud: upsert resource failed", error.message);
+  const payload = resourceToInsert(resource);
+  const { error } = await supabase.from("resources").upsert(payload);
+  if (!error) return;
+  // Databases provisioned before the week/authors columns exist will reject the
+  // new fields — retry once with the legacy payload so saves still succeed.
+  if (/\b(week|authors)\b/i.test(error.message)) {
+    const { week: _week, authors: _authors, ...legacy } = payload as Record<string, unknown>;
+    const retry = await supabase.from("resources").upsert(legacy as ResourceInsert);
+    if (retry.error) console.warn("LRMS cloud: upsert resource failed", retry.error.message);
+    return;
+  }
+  console.warn("LRMS cloud: upsert resource failed", error.message);
 }
 
 export async function deleteCloudResource(id: string): Promise<void> {

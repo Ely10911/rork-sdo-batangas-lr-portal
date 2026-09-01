@@ -148,7 +148,13 @@ export default function ResourceDetail() {
       : ["Number of pages", `${resource.pages}`],
     ["Language", resource.language],
     ["Version", resource.version],
-    ["Author", resource.author],
+    [
+      "Authors",
+      resource.authors.length > 0
+        ? resource.authors.map((a) => (a.position ? `${a.name} (${a.position})` : a.name)).join(", ")
+        : resource.author,
+    ],
+    ["Week", resource.week || "All Weeks"],
     ["Schools", resource.schools.join(", ") || "—"],
     ["Sub-offices", resource.subOffices.join(", ") || "—"],
     ["Division", resource.division],

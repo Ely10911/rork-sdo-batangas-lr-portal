@@ -216,6 +216,7 @@ export type Database = {
       resources: {
         Row: {
           author: string
+          authors: Json
           competency_code: string
           copyright: string
           created_at: string
@@ -255,9 +256,11 @@ export type Database = {
           version: string
           versions: Json
           views: number
+          week: string
         }
         Insert: {
           author: string
+          authors?: Json
           competency_code?: string
           copyright?: string
           created_at?: string
@@ -297,9 +300,11 @@ export type Database = {
           version?: string
           versions?: Json
           views?: number
+          week?: string
         }
         Update: {
           author?: string
+          authors?: Json
           competency_code?: string
           copyright?: string
           created_at?: string

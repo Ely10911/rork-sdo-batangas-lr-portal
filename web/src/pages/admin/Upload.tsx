@@ -15,16 +15,18 @@ import {
   GRADE_LEVELS,
   LANGUAGES,
   LEARNING_AREAS,
+  POSITIONS,
   QUARTERS,
   RESOURCE_TYPES,
   SCHOOL_NAMES,
   SCHOOL_YEARS,
   SHS_STRANDS,
   SUB_OFFICE_NAMES,
+  WEEK_OPTIONS,
   keyStageFor,
 } from "@/lib/taxonomy";
 import { useLrms } from "@/lib/store";
-import type { FileKind, LearningResource, Quarter, ResourceStatus } from "@/lib/types";
+import type { FileKind, LearningResource, Quarter, ResourceAuthor, ResourceStatus } from "@/lib/types";
 
 /** Detect file kind from a URL's extension. */
 function detectKindFromUrl(url: string): FileKind {
@@ -60,6 +62,9 @@ interface Staged {
   durationSec: number;
   language: string;
   author: string;
+  position: string;
+  week: string;
+  extraAuthors: ResourceAuthor[];
   schools: string[];
   subOffices: string[];
   copyright: string;
@@ -75,6 +80,8 @@ interface BatchDefaults {
   resourceType: string;
   language: string;
   author: string;
+  position: string;
+  week: string;
   schools: string[];
   subOffices: string[];
   schoolYear: string;
@@ -88,6 +95,8 @@ const DEFAULTS: BatchDefaults = {
   resourceType: RESOURCE_TYPES[0],
   language: LANGUAGES[0],
   author: "",
+  position: POSITIONS[0],
+  week: "All Weeks",
   schools: [],
   subOffices: [],
   schoolYear: SCHOOL_YEARS[2],
@@ -118,6 +127,35 @@ function Picker({
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="max-h-72">
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {option}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/** Single-select picker that supports an empty (unset) value. */
+function OptionalPicker({
+  value,
+  options,
+  placeholder,
+  onChange,
+}: {
+  value: string;
+  options: string[];
+  placeholder: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select value={value || "—"} onValueChange={(v) => onChange(v === "—" ? "" : v)}>
+      <SelectTrigger className="h-9 rounded-sm text-[13px]">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent className="max-h-72">
+        <SelectItem value="—">{placeholder}</SelectItem>
         {options.map((option) => (
           <SelectItem key={option} value={option}>
             {option}
@@ -260,6 +298,9 @@ export default function AdminUpload() {
       durationSec: 0,
       language: batch.language,
       author: batch.author,
+      position: batch.position,
+      week: batch.week,
+      extraAuthors: [],
       schools: batch.schools.length > 0 ? [...batch.schools] : [],
       subOffices: batch.subOffices.length > 0 ? [...batch.subOffices] : [],
       copyright: batch.copyright,
@@ -286,6 +327,8 @@ export default function AdminUpload() {
         resourceType: batch.resourceType,
         language: batch.language,
         author: batch.author || item.author,
+        position: batch.position,
+        week: batch.week,
         schools: batch.schools.length > 0 ? [...batch.schools] : item.schools,
         subOffices: batch.subOffices.length > 0 ? [...batch.subOffices] : item.subOffices,
         schoolYear: batch.schoolYear,
@@ -329,6 +372,17 @@ export default function AdminUpload() {
       durationSec: item.durationSec,
       language: item.language,
       author: item.author.trim(),
+      position: item.position,
+      week: item.week,
+      authors: [
+        {
+          name: item.author.trim(),
+          position: item.position,
+          school: item.schools[0] ?? "",
+          subOffice: item.subOffices[0] ?? "",
+        },
+        ...item.extraAuthors,
+      ].filter((a) => a.name),
       schools: item.schools.length > 0 ? item.schools : [],
       subOffices: item.subOffices.length > 0 ? item.subOffices : [],
       division: DIVISION,
@@ -528,6 +582,13 @@ export default function AdminUpload() {
                               onChange={(v) => patchStaged(item.key, { quarter: v as Quarter })}
                             />
                           </Field>
+                          <Field label="Week">
+                            <Picker
+                              value={item.week}
+                              options={WEEK_OPTIONS}
+                              onChange={(v) => patchStaged(item.key, { week: v })}
+                            />
+                          </Field>
                           <Field label="Resource type">
                             <Picker
                               value={item.resourceType}
@@ -586,12 +647,19 @@ export default function AdminUpload() {
                               className="h-9 rounded-sm text-[13px]"
                             />
                           </Field>
-                          <Field label="Author">
+                          <Field label="Author (primary)">
                             <Input
                               value={item.author}
                               onChange={(e) => patchStaged(item.key, { author: e.target.value })}
                               placeholder="Full name of the writer"
                               className="h-9 rounded-sm text-[13px]"
+                            />
+                          </Field>
+                          <Field label="Position (primary author)">
+                            <Picker
+                              value={item.position}
+                              options={POSITIONS}
+                              onChange={(v) => patchStaged(item.key, { position: v })}
                             />
                           </Field>
                           <Field label="Language">
@@ -601,6 +669,101 @@ export default function AdminUpload() {
                               onChange={(v) => patchStaged(item.key, { language: v })}
                             />
                           </Field>
+                          <div className="md:col-span-2 rounded-sm border border-border bg-card/60 p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                                Additional authors
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  patchStaged(item.key, {
+                                    extraAuthors: [
+                                      ...item.extraAuthors,
+                                      { name: "", position: POSITIONS[0], school: "", subOffice: "" },
+                                    ],
+                                  })
+                                }
+                                className="focus-ring inline-flex items-center gap-1 rounded-sm border border-gold/40 bg-gold/10 px-2 py-1 text-[12px] font-medium text-gold-deep"
+                              >
+                                <Plus className="h-3 w-3" /> Add author
+                              </button>
+                            </div>
+                            {item.extraAuthors.length === 0 && (
+                              <p className="mt-2 text-[12px] text-muted-foreground">
+                                No additional authors. Click “Add author” to credit co-writers with their own name,
+                                position, school and sub-office.
+                              </p>
+                            )}
+                            <div className="mt-2 space-y-2">
+                              {item.extraAuthors.map((author, idx) => (
+                                <div
+                                  key={idx}
+                                  className="grid items-center gap-2 rounded-sm border border-border/60 bg-muted/30 p-2 md:grid-cols-[1.3fr_1.1fr_1.5fr_1.2fr_auto]"
+                                >
+                                  <Input
+                                    value={author.name}
+                                    onChange={(e) =>
+                                      patchStaged(item.key, {
+                                        extraAuthors: item.extraAuthors.map((a, i) =>
+                                          i === idx ? { ...a, name: e.target.value } : a,
+                                        ),
+                                      })
+                                    }
+                                    placeholder="Full name"
+                                    className="h-9 rounded-sm text-[13px]"
+                                  />
+                                  <Picker
+                                    value={author.position || POSITIONS[0]}
+                                    options={POSITIONS}
+                                    onChange={(v) =>
+                                      patchStaged(item.key, {
+                                        extraAuthors: item.extraAuthors.map((a, i) =>
+                                          i === idx ? { ...a, position: v } : a,
+                                        ),
+                                      })
+                                    }
+                                  />
+                                  <OptionalPicker
+                                    value={author.school}
+                                    options={SCHOOL_NAMES}
+                                    placeholder="— school —"
+                                    onChange={(v) =>
+                                      patchStaged(item.key, {
+                                        extraAuthors: item.extraAuthors.map((a, i) =>
+                                          i === idx ? { ...a, school: v } : a,
+                                        ),
+                                      })
+                                    }
+                                  />
+                                  <OptionalPicker
+                                    value={author.subOffice}
+                                    options={SUB_OFFICE_NAMES}
+                                    placeholder="— sub-office —"
+                                    onChange={(v) =>
+                                      patchStaged(item.key, {
+                                        extraAuthors: item.extraAuthors.map((a, i) =>
+                                          i === idx ? { ...a, subOffice: v } : a,
+                                        ),
+                                      })
+                                    }
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      patchStaged(item.key, {
+                                        extraAuthors: item.extraAuthors.filter((_, i) => i !== idx),
+                                      })
+                                    }
+                                    aria-label="Remove author"
+                                    className="focus-ring mx-auto grid h-8 w-8 place-items-center rounded-sm border border-border bg-card text-muted-foreground hover:border-destructive/60 hover:text-destructive"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                           <div className="md:col-span-2">
                             <MultiSelect
                               label="Sub-offices (select multiple)"
@@ -757,6 +920,20 @@ export default function AdminUpload() {
                   onChange={(event) => setBatch({ ...batch, author: event.target.value })}
                   placeholder="Writer / uploader name"
                   className="h-9 rounded-sm text-[13px]"
+                />
+              </Field>
+              <Field label="Primary author position">
+                <Picker
+                  value={batch.position}
+                  options={POSITIONS}
+                  onChange={(v) => setBatch({ ...batch, position: v })}
+                />
+              </Field>
+              <Field label="Week">
+                <Picker
+                  value={batch.week}
+                  options={WEEK_OPTIONS}
+                  onChange={(v) => setBatch({ ...batch, week: v })}
                 />
               </Field>
               <MultiSelect

@@ -6,6 +6,7 @@ import type {
   LearningResource,
   PortalUser,
   Quarter,
+  ResourceAuthor,
   ResourceStatus,
 } from "./types";
 import {
@@ -40,6 +41,8 @@ interface Spec {
   code: string;
   competency: string;
   author: string;
+  position?: string;
+  week?: string;
   school: string;
   language: string;
   keywords: string[];
@@ -584,6 +587,8 @@ export function buildResources(): LearningResource[] {
     const version = `v1.${minorVersions}`;
     const fileName = `${slugify(spec.title)}.${spec.kind}`;
     const subOffice = subOfficeFor(spec.school);
+    const position = spec.position ?? "Teacher III";
+    const authors: ResourceAuthor[] = [{ name: spec.author, position, school: spec.school, subOffice }];
 
     const versions = Array.from({ length: minorVersions + 1 }, (_, v) => ({
       version: `v1.${v}`,
@@ -617,6 +622,9 @@ export function buildResources(): LearningResource[] {
       durationSec,
       language: spec.language,
       author: spec.author,
+      position,
+      week: spec.week ?? "All Weeks",
+      authors,
       schools: [spec.school],
       subOffices: [subOffice],
       division: DIVISION,

@@ -1,10 +1,11 @@
-import type { LearningResource, SearchFilters, SortKey } from "./types";
+import { resourceAuthorNames, type LearningResource, type SearchFilters, type SortKey } from "./types";
 
 export const EMPTY_FILTERS: SearchFilters = {
   query: "",
   learningArea: "any",
   gradeLevel: "any",
   quarter: "any",
+  week: "any",
   subject: "any",
   keyStage: "any",
   shsStrand: "any",
@@ -37,7 +38,7 @@ export function scoreResource(resource: LearningResource, query: string): number
   if (resource.competencyCode.toLowerCase().includes(q)) score += 55;
   if (resource.id.toLowerCase().includes(q)) score += 70;
   if (resource.keywords.some((k) => k.toLowerCase().includes(q))) score += 34;
-  if (resource.author.toLowerCase().includes(q)) score += 26;
+  if (resourceAuthorNames(resource).some((a) => a.toLowerCase().includes(q))) score += 26;
   if (resource.schools.some((s) => s.toLowerCase().includes(q))) score += 20;
   if (resource.learningCompetency.toLowerCase().includes(q)) score += 18;
   if (resource.description.toLowerCase().includes(q)) score += 10;
@@ -76,6 +77,7 @@ export function searchResources(
     if (filters.learningArea !== "any" && r.learningArea !== filters.learningArea) return false;
     if (filters.gradeLevel !== "any" && r.gradeLevel !== filters.gradeLevel) return false;
     if (filters.quarter !== "any" && r.quarter !== filters.quarter) return false;
+    if (filters.week !== "any" && r.week !== filters.week) return false;
     if (filters.subject !== "any" && r.subject !== filters.subject) return false;
     if (filters.keyStage !== "any" && r.keyStage !== filters.keyStage) return false;
     if (filters.shsStrand !== "any" && r.shsStrand !== filters.shsStrand) return false;
@@ -85,7 +87,7 @@ export function searchResources(
     if (filters.school !== "any" && !r.schools.includes(filters.school)) return false;
     if (filters.subOffice !== "any" && !r.subOffices.includes(filters.subOffice)) return false;
     if (filters.schoolYear !== "any" && r.schoolYear !== filters.schoolYear) return false;
-    if (filters.author !== "any" && r.author !== filters.author) return false;
+    if (filters.author !== "any" && !resourceAuthorNames(r).includes(filters.author)) return false;
     if (
       filters.competencyCode.trim() &&
       !r.competencyCode.toLowerCase().includes(filters.competencyCode.trim().toLowerCase())
@@ -169,9 +171,11 @@ export function buildSuggestions(resources: LearningResource[], query: string, l
     r.keywords.filter((k) => k.toLowerCase().includes(q)).forEach((k) => push({ label: k, hint: "Keyword", kind: "keyword" }));
   });
 
-  published
-    .filter((r) => r.author.toLowerCase().includes(q))
-    .forEach((r) => push({ label: r.author, hint: "Author", kind: "author" }));
+  published.forEach((r) => {
+    resourceAuthorNames(r)
+      .filter((a) => a.toLowerCase().includes(q))
+      .forEach((a) => push({ label: a, hint: "Author", kind: "author" }));
+  });
 
   published.forEach((r) => {
     r.schools.filter((s) => s.toLowerCase().includes(q)).forEach((s) => push({ label: s, hint: "School", kind: "school" }));

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Archive, Check, CheckCircle2, Filter, History, Pencil, Search, Send, Trash2, X } from "lucide-react";
+import { Archive, Check, CheckCircle2, Filter, History, Pencil, Plus, Search, Send, Trash2, X } from "lucide-react";
 
 import { AdminShell } from "@/components/AdminShell";
 import { Eyebrow, FileKindTag, StatusPill } from "@/components/atoms";
@@ -16,15 +16,17 @@ import {
   GRADE_LEVELS,
   LANGUAGES,
   LEARNING_AREAS,
+  POSITIONS,
   QUARTERS,
   RESOURCE_TYPES,
   SCHOOL_NAMES,
   SCHOOL_YEARS,
   SUB_OFFICE_NAMES,
+  WEEK_OPTIONS,
   keyStageFor,
 } from "@/lib/taxonomy";
 import { useLrms } from "@/lib/store";
-import type { LearningResource, Quarter, ResourceStatus } from "@/lib/types";
+import { resourceAuthorNames, type LearningResource, type Quarter, type ResourceAuthor, type ResourceStatus } from "@/lib/types";
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "all", label: "All statuses" },
@@ -148,7 +150,7 @@ export default function ManageResources() {
               r.title.toLowerCase().includes(q) ||
               r.id.toLowerCase().includes(q) ||
               r.competencyCode.toLowerCase().includes(q) ||
-              r.author.toLowerCase().includes(q) ||
+              resourceAuthorNames(r).some((a) => a.toLowerCase().includes(q)) ||
               r.schools.some((s) => s.toLowerCase().includes(q))
             );
           }
@@ -470,6 +472,24 @@ function EditDialog({
 
   const set = (patch: Partial<LearningResource>) => setDraft({ ...draft, ...patch });
 
+  /** Update the primary author while keeping the authors array in sync. */
+  const setPrimaryAuthor = (patch: { author?: string; position?: string }) => {
+    const primary = draft.authors[0] ?? { name: draft.author, position: draft.position, school: "", subOffice: "" };
+    setDraft({
+      ...draft,
+      ...patch,
+      authors: [{ ...primary, ...patch }, ...draft.authors.slice(1)],
+    });
+  };
+
+  /** Replace the additional authors (index 1+) while keeping the primary author. */
+  const setExtraAuthors = (list: ResourceAuthor[]) => {
+    const primary = draft.authors[0] ?? { name: draft.author, position: draft.position, school: "", subOffice: "" };
+    setDraft({ ...draft, authors: [primary, ...list] });
+  };
+
+  const extraAuthors = draft.authors.slice(1);
+
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
@@ -535,6 +555,20 @@ function EditDialog({
               </SelectTrigger>
               <SelectContent>
                 {QUARTERS.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Week">
+            <Select value={draft.week} onValueChange={(v) => set({ week: v })}>
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WEEK_OPTIONS.map((v) => (
                   <SelectItem key={v} value={v}>
                     {v}
                   </SelectItem>
@@ -608,9 +642,125 @@ function EditDialog({
               className="h-9 rounded-sm text-[14px]"
             />
           </Field>
-          <Field label="Author">
-            <Input value={draft.author} onChange={(e) => set({ author: e.target.value })} className="h-9 rounded-sm text-[14px]" />
+          <Field label="Author (primary)">
+            <Input
+              value={draft.author}
+              onChange={(e) => setPrimaryAuthor({ author: e.target.value })}
+              className="h-9 rounded-sm text-[14px]"
+            />
           </Field>
+          <Field label="Position (primary author)">
+            <Select value={draft.position || POSITIONS[0]} onValueChange={(v) => setPrimaryAuthor({ position: v })}>
+              <SelectTrigger className="h-9 rounded-sm text-[14px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POSITIONS.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="md:col-span-2 rounded-sm border border-border bg-card/60 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                Additional authors
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setExtraAuthors([...extraAuthors, { name: "", position: POSITIONS[0], school: "", subOffice: "" }])
+                }
+                className="focus-ring inline-flex items-center gap-1 rounded-sm border border-gold/40 bg-gold/10 px-2 py-1 text-[12px] font-medium text-gold-deep"
+              >
+                <Plus className="h-3 w-3" /> Add author
+              </button>
+            </div>
+            {extraAuthors.length === 0 && (
+              <p className="mt-2 text-[13px] text-muted-foreground">
+                No additional authors. Click “Add author” to credit co-writers with their own name, position, school
+                and sub-office.
+              </p>
+            )}
+            <div className="mt-2 space-y-2">
+              {extraAuthors.map((author, idx) => (
+                <div
+                  key={idx}
+                  className="grid items-center gap-2 rounded-sm border border-border/60 bg-muted/30 p-2 md:grid-cols-[1.3fr_1.1fr_1.5fr_1.2fr_auto]"
+                >
+                  <Input
+                    value={author.name}
+                    onChange={(e) =>
+                      setExtraAuthors(extraAuthors.map((a, i) => (i === idx ? { ...a, name: e.target.value } : a)))
+                    }
+                    placeholder="Full name"
+                    className="h-9 rounded-sm text-[14px]"
+                  />
+                  <Select
+                    value={author.position || POSITIONS[0]}
+                    onValueChange={(v) => setExtraAuthors(extraAuthors.map((a, i) => (i === idx ? { ...a, position: v } : a)))}
+                  >
+                    <SelectTrigger className="h-9 rounded-sm text-[13px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {POSITIONS.map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={author.school || "—"}
+                    onValueChange={(v) =>
+                      setExtraAuthors(extraAuthors.map((a, i) => (i === idx ? { ...a, school: v === "—" ? "" : v } : a)))
+                    }
+                  >
+                    <SelectTrigger className="h-9 rounded-sm text-[13px]">
+                      <SelectValue placeholder="— school —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="—">— school —</SelectItem>
+                      {SCHOOL_NAMES.map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={author.subOffice || "—"}
+                    onValueChange={(v) =>
+                      setExtraAuthors(extraAuthors.map((a, i) => (i === idx ? { ...a, subOffice: v === "—" ? "" : v } : a)))
+                    }
+                  >
+                    <SelectTrigger className="h-9 rounded-sm text-[13px]">
+                      <SelectValue placeholder="— sub-office —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="—">— sub-office —</SelectItem>
+                      {SUB_OFFICE_NAMES.map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => setExtraAuthors(extraAuthors.filter((_, i) => i !== idx))}
+                    aria-label="Remove author"
+                    className="focus-ring mx-auto grid h-8 w-8 place-items-center rounded-sm border border-border bg-card text-muted-foreground hover:border-destructive/60 hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
           <Field label="Copyright">
             <Select value={draft.copyright} onValueChange={(v) => set({ copyright: v })}>
               <SelectTrigger className="h-9 rounded-sm text-[14px]">

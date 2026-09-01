@@ -20,9 +20,10 @@ import {
   SHS_STRANDS,
   SUB_OFFICE_NAMES,
   UPLOAD_WINDOWS,
+  WEEK_OPTIONS,
 } from "@/lib/taxonomy";
 import { useLrms } from "@/lib/store";
-import type { SearchFilters } from "@/lib/types";
+import { resourceAuthorNames, type SearchFilters } from "@/lib/types";
 
 interface Props {
   filters: SearchFilters;
@@ -87,7 +88,7 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
   }, [filters.learningArea, resources]);
 
   const authorOptions = useMemo(
-    () => toOptions(Array.from(new Set(resources.map((r) => r.author))).sort()),
+    () => toOptions(Array.from(new Set(resources.flatMap(resourceAuthorNames))).sort()),
     [resources],
   );
 
@@ -145,6 +146,13 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
             onChange={(v) => onChange({ quarter: v })}
           />
         </div>
+        <FilterSelect
+          label="Week"
+          value={filters.week}
+          anyLabel="All weeks"
+          options={toOptions(WEEK_OPTIONS)}
+          onChange={(v) => onChange({ week: v })}
+        />
         <div className="grid grid-cols-2 gap-3">
           <FilterSelect
             label="Key stage"

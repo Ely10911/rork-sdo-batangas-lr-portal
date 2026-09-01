@@ -8,6 +8,8 @@ export const DIVISION = "Schools Division Office of Batangas";
 export const LEGACY_LR_URL = "https://sdobatangaslrmds.wixsite.com/sdobatangaslrportal";
 
 export const LEARNING_AREAS: string[] = [
+  "Kindergarten",
+  "GMRC",
   "Filipino",
   "English",
   "Mathematics",
@@ -85,6 +87,45 @@ export const RESOURCE_TYPES: string[] = [
   "Curriculum Guide",
   "Supplementary Reading Material",
   "Kasaysayan",
+];
+
+/** Week coverage options: single weeks plus every contiguous range (e.g. "Week 1-3"). */
+export const WEEK_OPTIONS: string[] = [
+  "All Weeks",
+  ...Array.from({ length: 8 }, (_, i) => `Week ${i + 1}`),
+  ...Array.from({ length: 8 }, (_, start) =>
+    Array.from({ length: 7 - start }, (_, span) => `Week ${start + 1}-${start + span + 2}`),
+  ).flat(),
+];
+
+/** DepEd plantilla positions for resource authors. */
+export const POSITIONS: string[] = [
+  "Teacher I",
+  "Teacher II",
+  "Teacher III",
+  "Teacher IV",
+  "Teacher V",
+  "Teacher VI",
+  "Teacher VII",
+  "Master Teacher I",
+  "Master Teacher II",
+  "Master Teacher III",
+  "Master Teacher IV",
+  "Master Teacher V",
+  "Head Teacher I",
+  "Head Teacher II",
+  "Head Teacher III",
+  "Head Teacher IV",
+  "Head Teacher V",
+  "Head Teacher VI",
+  "Principal I",
+  "Principal II",
+  "Principal III",
+  "Principal IV",
+  "Education Program Supervisor",
+  "Administrative Officer II",
+  "Project Development Officer I",
+  "Project Development Officer II",
 ];
 
 export const FILE_KINDS: FileKind[] = ["pdf", "docx", "pptx", "epub", "video", "audio", "image"];

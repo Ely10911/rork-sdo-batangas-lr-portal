@@ -6,6 +6,14 @@ export type ResourceStatus = "published" | "pending" | "draft" | "archived";
 
 export type Quarter = "All Quarters" | "Quarter 1" | "Quarter 2" | "Quarter 3" | "Quarter 4";
 
+/** A person credited as an author of a resource, with DepEd position and affiliation. */
+export interface ResourceAuthor {
+  name: string;
+  position: string;
+  school: string;
+  subOffice: string;
+}
+
 export type UserRole = "admin" | "viewer" | "visitor";
 
 /** A single uploaded revision of a resource file. */
@@ -51,6 +59,12 @@ export interface LearningResource {
   durationSec: number;
   language: string;
   author: string;
+  /** Primary author's DepEd plantilla position (e.g. "Master Teacher I"). */
+  position: string;
+  /** Week coverage, e.g. "All Weeks", "Week 3" or "Week 1-3". */
+  week: string;
+  /** All credited authors (primary first); synced with the legacy `author` field. */
+  authors: ResourceAuthor[];
   /** Multiple schools can be selected for a resource. */
   schools: string[];
   /** Multiple sub-offices can be selected for a resource. */
@@ -125,6 +139,7 @@ export interface SearchFilters {
   learningArea: string;
   gradeLevel: string;
   quarter: string;
+  week: string;
   subject: string;
   keyStage: string;
   shsStrand: string;
@@ -143,3 +158,10 @@ export interface SearchFilters {
 export type SortKey = "relevance" | "recent" | "downloads" | "rating" | "title" | "views";
 
 export const ANY = "any" as const;
+
+/** All credited author names for a resource (primary first, legacy field included). */
+export function resourceAuthorNames(resource: LearningResource): string[] {
+  const names = resource.authors.map((a) => a.name).filter(Boolean);
+  if (resource.author && !names.includes(resource.author)) names.unshift(resource.author);
+  return names;
+}
