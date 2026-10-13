@@ -22,6 +22,8 @@ import {
   fetchCloudUsers,
   fetchCloudVisitorCount,
   getOrCreateVisitorId,
+  resetVisitorId,
+  setVisitorId,
   heartbeatVisitor,
   incrementCloudDownloads,
   incrementCloudViews,
@@ -59,6 +61,36 @@ import type {
 } from "./types";
 
 const SESSION_KEY = "sdo-batangas-lrms:session";
+const KNOWN_ACCOUNTS_KEY = "sdo-batangas-lrms:viewer-accounts";
+
+/** Merge cloud user rows with local-only accounts (e.g. registrations whose
+ *  cloud write was interrupted) so neither source can evict the other. */
+function mergeUsers(cloudRows: PortalUser[], local: PortalUser[]): PortalUser[] {
+  const ids = new Set(cloudRows.map((u) => u.id));
+  return [...cloudRows, ...local.filter((u) => !ids.has(u.id))];
+}
+
+/** Persistent directory of viewer accounts registered on this device, so
+ *  sign-in keeps working across reloads even if a cloud write never landed. */
+function loadKnownAccounts(): PortalUser[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(KNOWN_ACCOUNTS_KEY);
+    return raw ? (JSON.parse(raw) as PortalUser[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberAccount(user: PortalUser): void {
+  if (typeof window === "undefined") return;
+  try {
+    const known = loadKnownAccounts().filter((u) => u.email?.toLowerCase() !== user.email?.toLowerCase());
+    window.localStorage.setItem(KNOWN_ACCOUNTS_KEY, JSON.stringify([user, ...known].slice(0, 50)));
+  } catch {
+    // Storage unavailable — sign-in will rely on the cloud instead.
+  }
+}
 
 interface PersistedShape {
   resources: LearningResource[];
@@ -84,6 +116,8 @@ interface LrmsValue extends PersistedShape {
   continueAsViewer: () => void;
   /** Self-service viewer registration. Returns an error message on failure. */
   registerViewer: (input: { name: string; email: string; subOffice: string; school: string }) => Promise<{ ok: boolean; error?: string }>;
+  /** Sign in as a registered viewer using the email they registered with. */
+  loginViewer: (email: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
   addResources: (records: LearningResource[]) => void;
   updateResource: (id: string, patch: Partial<LearningResource>) => void;
@@ -187,7 +221,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
         bookmarks,
         collections,
         notifications,
-        users,
+        users: mergeUsers(users, prev.users),
         extraDownloads,
       }));
       setCloudSyncing(false);
@@ -224,7 +258,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
           void fetchCloudNotifications().then((rows) => setState((prev) => ({ ...prev, notifications: rows })));
           break;
         case "portal_users":
-          void fetchCloudUsers().then((rows) => setState((prev) => ({ ...prev, users: rows })));
+          void fetchCloudUsers().then((rows) => setState((prev) => ({ ...prev, users: mergeUsers(rows, prev.users) })));
           break;
       }
     };
@@ -289,6 +323,8 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
 
   const downloadEvents = useMemo<DownloadEvent[]>(() => [...state.extraDownloads], [state.extraDownloads]);
 
+  const registeredEmail = state.session?.registered ? state.session.email : null;
+
   // Visitor tracking: heartbeat + real-time presence for active user count.
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -332,7 +368,9 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("focus", handleFocus);
       unsubscribePresence?.();
     };
-  }, []);
+    // Re-attach presence/heartbeats when the signed-in account changes (viewer
+    // login adopts the account's visitor ID, sign-out returns to anonymous).
+  }, [registeredEmail]);
 
   const login = useCallback((username: string, password: string): boolean => {
     const ok = username.trim() === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password;
@@ -379,6 +417,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
         active: true,
       };
       void upsertCloudUser(user);
+      rememberAccount(user);
 
       const session: Session = {
         role: "viewer",
@@ -401,8 +440,63 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
     [state.users],
   );
 
+  /** Sign in on this device with a previously registered viewer account. */
+  const loginViewer = useCallback(
+    async (rawEmail: string) => {
+      const email = rawEmail.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return { ok: false, error: "Please enter a valid email address." };
+      }
+
+      // Look the account up in the cloud, then the in-memory cache, then the
+      // persistent directory of accounts registered on this device.
+      const cloudUsers = isSupabaseConfigured ? await fetchCloudUsers() : [];
+      const account = [...cloudUsers, ...state.users, ...loadKnownAccounts()].find(
+        (u) => u.role === "visitor" && u.email && u.email.toLowerCase() === email,
+      );
+      if (!account) {
+        return { ok: false, error: "No registered viewer account was found with this email address. Please register first." };
+      }
+      if (!account.active) {
+        return { ok: false, error: "This account has been deactivated by the administrator." };
+      }
+
+      // Adopt the account identity on this device so presence, heartbeats and
+      // analytics stay attached to the same portal_users row.
+      setVisitorId(account.id);
+
+      const session: Session = {
+        role: "viewer",
+        name: account.name,
+        username: email,
+        email,
+        school: account.school,
+        subOffice: account.subOffice,
+        userId: account.id,
+        registered: true,
+      };
+      saveSession(session);
+      setState((prev) => ({
+        ...prev,
+        session,
+        users: [account, ...prev.users.filter((u) => u.id !== account.id)],
+      }));
+      void heartbeatVisitor(account.id, {
+        name: account.name,
+        email,
+        school: account.school ?? "",
+        subOffice: account.subOffice ?? "",
+      });
+      return { ok: true };
+    },
+    [state.users],
+  );
+
   const logout = useCallback(() => {
     saveSession(null);
+    // Sign-out returns this device to anonymous tracking so the signed-out
+    // account's portal_users row keeps its registered profile.
+    resetVisitorId();
     setState((prev) => ({ ...prev, session: null }));
   }, []);
 
@@ -622,6 +716,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       login,
       continueAsViewer,
       registerViewer,
+      loginViewer,
       logout,
       addResources,
       updateResource,
@@ -649,6 +744,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       login,
       continueAsViewer,
       registerViewer,
+      loginViewer,
       logout,
       addResources,
       updateResource,

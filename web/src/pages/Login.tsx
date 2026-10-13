@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowRight, Eye, EyeOff, KeyRound, Lock, ShieldCheck, UserRound, UserRoundPlus } from "lucide-react";
+import { ArrowRight, AtSign, Eye, EyeOff, KeyRound, Lock, ShieldCheck, UserRound, UserRoundPlus } from "lucide-react";
 
 import { Eyebrow } from "@/components/atoms";
 import { Input } from "@/components/ui/input";
@@ -11,14 +11,16 @@ import { useLrms } from "@/lib/store";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, continueAsViewer } = useLrms();
+  const { login, loginViewer, continueAsViewer } = useLrms();
+  const [mode, setMode] = useState<"admin" | "viewer">("admin");
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [viewerEmail, setViewerEmail] = useState<string>("");
   const [reveal, setReveal] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [busy, setBusy] = useState<boolean>(false);
 
-  const submit = (event: React.FormEvent) => {
+  const submitAdmin = (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setError("");
@@ -32,6 +34,20 @@ export default function Login() {
         setError("Invalid credentials. Access is restricted to authorized division personnel.");
       }
     }, 420);
+  };
+
+  const submitViewer = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    const result = await loginViewer(viewerEmail);
+    setBusy(false);
+    if (result.ok) {
+      toast.success("Welcome back! You are signed in to the viewer portal.");
+      navigate("/browse");
+    } else {
+      setError(result.error ?? "We could not sign you in. Please try again.");
+    }
   };
 
   return (
@@ -99,71 +115,152 @@ export default function Login() {
         </div>
 
         <div className="animate-fade-rise rounded-lg border border-white/12 bg-white/[0.06] p-6 backdrop-blur-md">
-          <p className="eyebrow text-gold-soft">Restricted area</p>
-          <h2 className="mt-1.5 font-display text-2xl font-bold text-white">System Administrator sign-in</h2>
-          <p className="mt-1 text-[12px] text-white/50">{DIVISION}</p>
+          {/* Sign-in type switch */}
+          <div className="grid grid-cols-2 gap-1 rounded-sm border border-white/12 bg-gold-deep/50 p-1" role="tablist" aria-label="Sign-in type">
+            {(
+              [
+                { id: "admin", label: "Administrator" },
+                { id: "viewer", label: "Viewer" },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={mode === tab.id}
+                onClick={() => {
+                  setMode(tab.id);
+                  setError("");
+                }}
+                className={cn(
+                  "focus-ring rounded-sm px-3 py-2 text-[12px] font-bold uppercase tracking-[0.08em] transition-colors",
+                  mode === tab.id ? "bg-gold text-gold-deep" : "text-white/55 hover:text-white",
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            <label className="block">
-              <span className="mb-1.5 block text-[11px] uppercase tracking-[0.1em] text-white/60">Username</span>
-              <div className="relative">
-                <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-                <Input
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  autoComplete="username"
-                  placeholder="Enter administrator username"
-                  className="h-10 rounded-sm border-white/20 bg-gold-deep/60 pl-9 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-gold"
-                />
-              </div>
-            </label>
+          {mode === "admin" ? (
+            <>
+              <p className="eyebrow mt-5 text-gold-soft">Restricted area</p>
+              <h2 className="mt-1.5 font-display text-2xl font-bold text-white">System Administrator sign-in</h2>
+              <p className="mt-1 text-[12px] text-white/50">{DIVISION}</p>
 
-            <label className="block">
-              <span className="mb-1.5 block text-[11px] uppercase tracking-[0.1em] text-white/60">Password</span>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-                <Input
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  type={reveal ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="Enter password"
-                  className="h-10 rounded-sm border-white/20 bg-gold-deep/60 pl-9 pr-10 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-gold"
-                />
+              <form onSubmit={submitAdmin} className="mt-6 space-y-4">
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] uppercase tracking-[0.1em] text-white/60">Username</span>
+                  <div className="relative">
+                    <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                    <Input
+                      value={username}
+                      onChange={(event) => setUsername(event.target.value)}
+                      autoComplete="username"
+                      placeholder="Enter administrator username"
+                      className="h-10 rounded-sm border-white/20 bg-gold-deep/60 pl-9 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-gold"
+                    />
+                  </div>
+                </label>
+
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] uppercase tracking-[0.1em] text-white/60">Password</span>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                    <Input
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      type={reveal ? "text" : "password"}
+                      autoComplete="current-password"
+                      placeholder="Enter password"
+                      className="h-10 rounded-sm border-white/20 bg-gold-deep/60 pl-9 pr-10 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-gold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setReveal((r) => !r)}
+                      aria-label={reveal ? "Hide password" : "Show password"}
+                      className="focus-ring absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-sm text-white/50 hover:text-white"
+                    >
+                      {reveal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </label>
+
+                {error && (
+                  <p className="rounded-sm border border-destructive/40 bg-destructive/15 px-3 py-2 text-[12px] text-white">
+                    {error}
+                  </p>
+                )}
+
                 <button
-                  type="button"
-                  onClick={() => setReveal((r) => !r)}
-                  aria-label={reveal ? "Hide password" : "Show password"}
-                  className="focus-ring absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-sm text-white/50 hover:text-white"
+                  type="submit"
+                  disabled={busy}
+                  className={cn(
+                    "focus-ring flex w-full items-center justify-center gap-2 rounded-sm bg-gold px-4 py-2.5 text-[13px] font-bold text-gold-deep transition-all hover:bg-gold-soft active:scale-[0.99]",
+                    busy && "opacity-70",
+                  )}
                 >
-                  {reveal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <KeyRound className="h-4 w-4" strokeWidth={2.2} />
+                  {busy ? "Verifying credentials…" : "Sign in to console"}
                 </button>
-              </div>
-            </label>
+              </form>
 
-            {error && (
-              <p className="rounded-sm border border-destructive/40 bg-destructive/15 px-3 py-2 text-[12px] text-white">
-                {error}
+              <p className="mt-5 border-t border-white/10 pt-4 text-[11px] leading-relaxed text-white/40">
+                Unauthorized access to this system is punishable under Philippine law (RA 10175). All sign-in attempts are
+                logged.
               </p>
-            )}
+            </>
+          ) : (
+            <>
+              <p className="eyebrow mt-5 text-gold-soft">Registered viewers</p>
+              <h2 className="mt-1.5 font-display text-2xl font-bold text-white">Sign in as a viewer</h2>
+              <p className="mt-1 text-[12px] text-white/50">
+                Use the email address you registered with to sync your account on this device.
+              </p>
 
-            <button
-              type="submit"
-              disabled={busy}
-              className={cn(
-                "focus-ring flex w-full items-center justify-center gap-2 rounded-sm bg-gold px-4 py-2.5 text-[13px] font-bold text-gold-deep transition-all hover:bg-gold-soft active:scale-[0.99]",
-                busy && "opacity-70",
-              )}
-            >
-              <KeyRound className="h-4 w-4" strokeWidth={2.2} />
-              {busy ? "Verifying credentials…" : "Sign in to console"}
-            </button>
-          </form>
+              <form onSubmit={submitViewer} className="mt-6 space-y-4">
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] uppercase tracking-[0.1em] text-white/60">Email address</span>
+                  <div className="relative">
+                    <AtSign className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                    <Input
+                      value={viewerEmail}
+                      onChange={(event) => setViewerEmail(event.target.value)}
+                      type="email"
+                      autoComplete="email"
+                      placeholder="name@deped.gov.ph"
+                      className="h-10 rounded-sm border-white/20 bg-gold-deep/60 pl-9 text-[13px] text-white placeholder:text-white/30 focus-visible:ring-gold"
+                    />
+                  </div>
+                </label>
 
-          <p className="mt-5 border-t border-white/10 pt-4 text-[11px] leading-relaxed text-white/40">
-            Unauthorized access to this system is punishable under Philippine law (RA 10175). All sign-in attempts are
-            logged.
-          </p>
+                {error && (
+                  <p className="rounded-sm border border-destructive/40 bg-destructive/15 px-3 py-2 text-[12px] text-white">
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className={cn(
+                    "focus-ring flex w-full items-center justify-center gap-2 rounded-sm bg-gold px-4 py-2.5 text-[13px] font-bold text-gold-deep transition-all hover:bg-gold-soft active:scale-[0.99]",
+                    busy && "opacity-70",
+                  )}
+                >
+                  <KeyRound className="h-4 w-4" strokeWidth={2.2} />
+                  {busy ? "Checking your account…" : "Sign in to viewer portal"}
+                </button>
+              </form>
+
+              <p className="mt-5 border-t border-white/10 pt-4 text-[12px] text-white/55">
+                Don&apos;t have an account yet?{" "}
+                <Link to="/register" className="font-bold text-gold-soft underline hover:text-gold">
+                  Register as a viewer
+                </Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

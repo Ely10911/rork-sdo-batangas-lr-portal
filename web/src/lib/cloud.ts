@@ -470,6 +470,29 @@ export function getOrCreateVisitorId(): string {
   }
 }
 
+/** Adopt an existing visitor/account ID (used when signing in on a new device). */
+export function setVisitorId(id: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(VISITOR_ID_KEY, id);
+  } catch {
+    // Storage unavailable — presence will simply use a fresh ID.
+  }
+}
+
+/** Issue a fresh anonymous visitor ID (used on sign-out so the account row is preserved). */
+export function resetVisitorId(): string {
+  const id = `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(VISITOR_ID_KEY, id);
+    } catch {
+      // Storage unavailable — nothing to reset.
+    }
+  }
+  return id;
+}
+
 /** Count total unique visitors ever recorded. */
 export async function fetchCloudVisitorCount(): Promise<number> {
   if (!supabase) return 0;
