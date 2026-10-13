@@ -29,6 +29,7 @@ export default function AdminUsers() {
           return (
             user.name.toLowerCase().includes(q) ||
             user.username.toLowerCase().includes(q) ||
+            user.email.toLowerCase().includes(q) ||
             user.school.toLowerCase().includes(q)
           );
         }
@@ -111,10 +112,10 @@ export default function AdminUsers() {
           <Eyebrow className="text-ink">Accounts · {rows.length}</Eyebrow>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] border-collapse text-left">
+          <table className="w-full min-w-[980px] border-collapse text-left">
             <thead>
               <tr className="bg-gold text-white">
-                {["User", "Role", "School", "Sub-office", "Uploads", "Last active", "Status"].map((head) => (
+                {["User", "Role", "Email", "School", "Sub-office", "Uploads", "Last active", "Status"].map((head) => (
                   <th key={head} className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em]">
                     {head}
                   </th>
@@ -156,6 +157,9 @@ export default function AdminUsers() {
                       {user.role === "admin" ? "Administrator" : "Viewer"}
                     </span>
                   </td>
+                  <td className="max-w-[200px] px-3 py-3 text-[12.5px] text-ink">
+                    <span className="block truncate">{user.email || "—"}</span>
+                  </td>
                   <td className="max-w-[220px] px-3 py-3 text-[12.5px] text-ink">
                     <span className="block truncate">{user.school}</span>
                   </td>
@@ -189,7 +193,7 @@ export default function AdminUsers() {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-muted-foreground">
                     No accounts match the current filters.
                   </td>
                 </tr>

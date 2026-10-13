@@ -121,6 +121,7 @@ export interface PortalUser {
   name: string;
   username: string;
   role: UserRole;
+  email: string;
   school: string;
   subOffice: string;
   lastActive: string;
@@ -131,6 +132,14 @@ export interface Session {
   role: UserRole;
   name: string;
   username: string;
+  /** Present when the viewer has registered a portal account. */
+  email?: string;
+  school?: string;
+  subOffice?: string;
+  /** Portal user id for registered viewers (same as the visitor heartbeat id). */
+  userId?: string;
+  /** True when the session belongs to a self-registered viewer account. */
+  registered?: boolean;
 }
 
 /** Every filter dimension supported by the advanced search engine. */

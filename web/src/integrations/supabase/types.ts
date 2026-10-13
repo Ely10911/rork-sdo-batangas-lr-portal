@@ -183,6 +183,7 @@ export type Database = {
       portal_users: {
         Row: {
           active: boolean
+          email: string | null
           id: string
           last_active: string
           name: string
@@ -193,6 +194,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          email?: string | null
           id: string
           last_active?: string
           name: string
@@ -203,6 +205,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          email?: string | null
           id?: string
           last_active?: string
           name?: string

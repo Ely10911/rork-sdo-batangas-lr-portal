@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowRight, Eye, EyeOff, KeyRound, Lock, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, KeyRound, Lock, ShieldCheck, UserRound, UserRoundPlus } from "lucide-react";
 
 import { Eyebrow } from "@/components/atoms";
 import { Input } from "@/components/ui/input";
@@ -86,6 +86,12 @@ export default function Login() {
             >
               Continue as public viewer <ArrowRight className="h-4 w-4" />
             </button>
+            <Link
+              to="/register"
+              className="focus-ring inline-flex items-center gap-2 rounded-sm bg-gold px-4 py-2.5 text-[13px] font-bold text-gold-deep transition-colors hover:bg-gold-soft"
+            >
+              <UserRoundPlus className="h-4 w-4" strokeWidth={2.2} /> Register as a viewer
+            </Link>
             <Link to="/" className="text-[13px] text-white/55 underline hover:text-white">
               Back to portal home
             </Link>

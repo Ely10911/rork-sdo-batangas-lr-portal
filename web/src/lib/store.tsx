@@ -82,6 +82,8 @@ interface LrmsValue extends PersistedShape {
   totalVisitors: number;
   login: (username: string, password: string) => boolean;
   continueAsViewer: () => void;
+  /** Self-service viewer registration. Returns an error message on failure. */
+  registerViewer: (input: { name: string; email: string; subOffice: string; school: string }) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
   addResources: (records: LearningResource[]) => void;
   updateResource: (id: string, patch: Partial<LearningResource>) => void;
@@ -293,13 +295,21 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
 
     const visitorId = getOrCreateVisitorId();
 
+    // Registered viewers keep their profile details on the visitor row.
+    const profile = (() => {
+      const session = loadSession();
+      return session?.registered && session.email
+        ? { name: session.name, email: session.email, school: session.school ?? "", subOffice: session.subOffice ?? "" }
+        : undefined;
+    })();
+
     // Register/heartbeat this visitor immediately.
-    void heartbeatVisitor(visitorId);
+    void heartbeatVisitor(visitorId, profile);
     void fetchCloudVisitorCount().then(setTotalVisitors);
 
     // Re-heartbeat every 60 seconds so last_active stays fresh.
     const heartbeatInterval = window.setInterval(() => {
-      void heartbeatVisitor(visitorId);
+      void heartbeatVisitor(visitorId, profile);
     }, 60_000);
 
     // Subscribe to real-time presence for active user count.
@@ -313,7 +323,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
     }, 30_000);
 
     // Also heartbeat on tab refocus.
-    const handleFocus = () => void heartbeatVisitor(visitorId);
+    const handleFocus = () => void heartbeatVisitor(visitorId, profile);
     window.addEventListener("focus", handleFocus);
 
     return () => {
@@ -339,6 +349,57 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
     saveSession(session);
     setState((prev) => ({ ...prev, session }));
   }, []);
+
+  /** Self-service registration: creates/claims the visitor's portal_users row. */
+  const registerViewer = useCallback(
+    async (input: { name: string; email: string; subOffice: string; school: string }) => {
+      const email = input.email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Please enter a valid email address." };
+
+      // Email uniqueness across every registered account (fresh read from the cloud).
+      const allUsers = isSupabaseConfigured ? await fetchCloudUsers() : [];
+      const duplicate = (allUsers.length > 0 ? allUsers : state.users).find(
+        (u) => u.email && u.email.toLowerCase() === email && u.id !== getOrCreateVisitorId(),
+      );
+      if (duplicate) {
+        return { ok: false, error: "This email address is already registered on the portal." };
+      }
+
+      const visitorId = getOrCreateVisitorId();
+      const now = new Date().toISOString();
+      const user: PortalUser = {
+        id: visitorId,
+        name: input.name.trim(),
+        username: email,
+        role: "visitor",
+        email,
+        school: input.school,
+        subOffice: input.subOffice,
+        lastActive: now,
+        active: true,
+      };
+      void upsertCloudUser(user);
+
+      const session: Session = {
+        role: "viewer",
+        name: user.name,
+        username: email,
+        email,
+        school: user.school,
+        subOffice: user.subOffice,
+        userId: visitorId,
+        registered: true,
+      };
+      saveSession(session);
+      setState((prev) => ({
+        ...prev,
+        session,
+        users: [user, ...prev.users.filter((u) => u.id !== visitorId)],
+      }));
+      return { ok: true };
+    },
+    [state.users],
+  );
 
   const logout = useCallback(() => {
     saveSession(null);
@@ -560,6 +621,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       totalVisitors,
       login,
       continueAsViewer,
+      registerViewer,
       logout,
       addResources,
       updateResource,
@@ -586,6 +648,7 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       totalVisitors,
       login,
       continueAsViewer,
+      registerViewer,
       logout,
       addResources,
       updateResource,

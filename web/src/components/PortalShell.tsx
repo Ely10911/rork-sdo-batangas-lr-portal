@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useMemo } from "react";
-import { BookMarked, Compass, LayoutDashboard, LibraryBig, LogOut, Radio, ShieldCheck } from "lucide-react";
+import { BookMarked, Compass, LayoutDashboard, LibraryBig, LogOut, Radio, ShieldCheck, UserRound, UserRoundPlus } from "lucide-react";
 
 import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
@@ -108,7 +108,30 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
 
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <NotificationBell />
-            {session?.role === "admin" ? (
+            {session?.registered ? (
+              <>
+                <span className="inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-card px-3 py-2 text-[13px] font-medium text-ink">
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-gold text-[9px] font-bold text-white">
+                    {session.name
+                      .split(" ")
+                      .filter((part) => /^[A-Za-z]/.test(part))
+                      .slice(-2)
+                      .map((part) => part[0])
+                      .join("")
+                      .toUpperCase() || "U"}
+                  </span>
+                  <span className="hidden max-w-[160px] truncate sm:inline">{session.name}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  aria-label="Sign out"
+                  className="focus-ring grid h-9 w-9 place-items-center rounded-sm border border-border bg-card text-ink hover:border-destructive/60 hover:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </>
+            ) : session?.role === "admin" ? (
               <>
                 <Link
                   to="/admin"
@@ -127,6 +150,16 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
                 </button>
               </>
             ) : (
+              <>
+              <Link
+                to="/register"
+                state={{ from: location.pathname }}
+                className="focus-ring inline-flex items-center gap-2 rounded-sm bg-gold px-3 py-2 text-[13px] font-semibold text-gold-deep transition-colors hover:bg-gold-soft"
+              >
+                <UserRoundPlus className="h-4 w-4" strokeWidth={2} />
+                <span className="hidden sm:inline">Register</span>
+                <span className="sm:hidden">Join</span>
+              </Link>
               <Link
                 to="/login"
                 state={{ from: location.pathname }}
@@ -136,6 +169,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">Administrator login</span>
                 <span className="sm:hidden">Login</span>
               </Link>
+              </>
             )}
           </div>
         </div>

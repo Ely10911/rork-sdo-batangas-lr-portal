@@ -23,6 +23,7 @@ type BookmarkRow = Database["public"]["Tables"]["bookmarks"]["Row"];
 type CollectionRow = Database["public"]["Tables"]["collections"]["Row"];
 type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
 type PortalUserRow = Database["public"]["Tables"]["portal_users"]["Row"];
+type PortalUserInsert = Database["public"]["Tables"]["portal_users"]["Insert"];
 
 /* ----------------------------------- mappers ---------------------------------- */
 
@@ -225,6 +226,7 @@ export function rowToPortalUser(row: PortalUserRow): PortalUser {
     name: row.name,
     username: row.username,
     role: row.role as PortalUser["role"],
+    email: row.email ?? "",
     school: row.school,
     subOffice: row.sub_office,
     lastActive: row.last_active,
@@ -425,17 +427,28 @@ export async function markCloudNotificationRead(id: string, read: boolean): Prom
 
 export async function upsertCloudUser(user: PortalUser): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from("portal_users").upsert({
+  const row = {
     id: user.id,
     name: user.name,
     username: user.username,
     role: user.role,
+    email: user.email || null,
     school: user.school,
     sub_office: user.subOffice,
     last_active: user.lastActive,
     active: user.active,
-  });
-  if (error) console.warn("LRMS cloud: upsert portal_user failed", error.message);
+  };
+  const { error } = await supabase.from("portal_users").upsert(row);
+  if (!error) return;
+  // Databases provisioned before the email column exists will reject it —
+  // retry once without the email so the registration still succeeds.
+  if (/\bemail\b/i.test(error.message)) {
+    const { email: _email, ...legacy } = row as Record<string, unknown>;
+    const retry = await supabase.from("portal_users").upsert(legacy as PortalUserInsert);
+    if (retry.error) console.warn("LRMS cloud: upsert portal_user failed", retry.error.message);
+    return;
+  }
+  console.warn("LRMS cloud: upsert portal_user failed", error.message);
 }
 
 /* --------------------------------- visitors ---------------------------------- */
@@ -472,20 +485,30 @@ export async function fetchCloudVisitorCount(): Promise<number> {
 }
 
 /** Register a visitor session and update their last-active timestamp. */
-export async function heartbeatVisitor(visitorId: string): Promise<void> {
+export async function heartbeatVisitor(visitorId: string, profile?: { name: string; email?: string; school?: string; subOffice?: string }): Promise<void> {
   if (!supabase) return;
   const now = new Date().toISOString();
-  const { error } = await supabase.from("portal_users").upsert({
+  const row = {
     id: visitorId,
-    name: "Anonymous Visitor",
-    username: visitorId,
+    name: profile?.name ?? "Anonymous Visitor",
+    username: profile?.email || visitorId,
     role: "visitor",
-    school: "",
-    sub_office: "",
+    email: profile?.email || null,
+    school: profile?.school ?? "",
+    sub_office: profile?.subOffice ?? "",
     last_active: now,
     active: true,
-  });
-  if (error) console.warn("LRMS cloud: visitor heartbeat failed", error.message);
+  };
+  const { error } = await supabase.from("portal_users").upsert(row);
+  if (!error) return;
+  // Legacy databases without the email column — retry without it.
+  if (/\bemail\b/i.test(error.message)) {
+    const { email: _email, ...legacy } = row as Record<string, unknown>;
+    const retry = await supabase.from("portal_users").upsert(legacy as PortalUserInsert);
+    if (retry.error) console.warn("LRMS cloud: visitor heartbeat failed", retry.error.message);
+    return;
+  }
+  console.warn("LRMS cloud: visitor heartbeat failed", error.message);
 }
 
 /* --------------------------------- presence ---------------------------------- */

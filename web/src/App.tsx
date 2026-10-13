@@ -10,6 +10,7 @@ import Browse from "./pages/Browse";
 import ResourceDetail from "./pages/ResourceDetail";
 import Library from "./pages/Library";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ManageResources from "./pages/admin/ManageResources";
 import AdminUpload from "./pages/admin/Upload";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/resource/:id" element={<ResourceDetail />} />
             <Route path="/library" element={<Library />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/resources" element={<ManageResources />} />
             <Route path="/admin/upload" element={<AdminUpload />} />
