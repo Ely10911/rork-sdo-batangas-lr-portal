@@ -66,11 +66,11 @@ export const SHS_STRANDS: string[] = [
 ];
 
 export const QUARTERS: Quarter[] = [
-  "All Quarters",
-  "Quarter 1",
-  "Quarter 2",
-  "Quarter 3",
-  "Quarter 4",
+  "All Terms",
+  "Term 1",
+  "Term 2",
+  "Term 3",
+  "Term 4",
 ];
 
 export const RESOURCE_TYPES: string[] = [
@@ -1003,7 +1003,7 @@ export const UPLOAD_WINDOWS: { value: string; label: string }[] = [
   { value: "any", label: "Any time" },
   { value: "7", label: "Last 7 days" },
   { value: "30", label: "Last 30 days" },
-  { value: "90", label: "Last quarter" },
+  { value: "90", label: "Last 3 months" },
   { value: "365", label: "Last school year" },
 ];
 

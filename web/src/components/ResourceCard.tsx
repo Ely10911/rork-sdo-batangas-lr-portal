@@ -80,7 +80,7 @@ function ResourceCardBase({ resource, variant = "grid", showStatus = false, inde
         <div className="hatch pointer-events-none absolute inset-0 opacity-40" />
         <div className="relative flex flex-wrap items-center gap-2">
           <FileKindTag kind={resource.fileKind} />
-          <MetaChip tone="ink">{resource.quarter.replace("Quarter", "Q")}</MetaChip>
+          <MetaChip tone="ink">{resource.quarter.replace("Term", "T")}</MetaChip>
           {resource.featured && <MetaChip tone="gold">Featured</MetaChip>}
         </div>
         <div className="relative">{bookmarkButton}</div>

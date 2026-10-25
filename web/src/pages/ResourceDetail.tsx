@@ -138,7 +138,7 @@ export default function ResourceDetail() {
     ["Grade level", resource.gradeLevel],
     ["Key stage", resource.keyStage],
     ["SHS strand", resource.shsStrand ?? "Not applicable"],
-    ["Quarter", resource.quarter],
+    ["Term", resource.quarter],
     ["Competency code", resource.competencyCode],
     ["MELC / CG reference", resource.melcReference],
     ["Resource type", resource.resourceType],

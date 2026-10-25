@@ -238,7 +238,7 @@ export default function Home() {
 
       {/* Featured */}
       <section className="container pb-14">
-        <SectionHeading eyebrow="Curated by the division" title="Featured this quarter" />
+        <SectionHeading eyebrow="Curated by the division" title="Featured this term" />
         <div className="grid gap-4 md:grid-cols-3">
           {featured.map((resource, i) => (
             <ResourceCard key={resource.id} resource={resource} index={i} />

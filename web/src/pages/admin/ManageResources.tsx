@@ -548,7 +548,7 @@ function EditDialog({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Quarter">
+          <Field label="Term">
             <Select value={draft.quarter} onValueChange={(v) => set({ quarter: v as Quarter })}>
               <SelectTrigger className="h-9 rounded-sm text-[14px]">
                 <SelectValue />

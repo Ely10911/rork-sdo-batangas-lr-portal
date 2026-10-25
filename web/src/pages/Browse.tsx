@@ -21,7 +21,7 @@ const PAGE_SIZE = 12;
 const FILTER_LABELS: Partial<Record<keyof SearchFilters, string>> = {
   learningArea: "Learning area",
   gradeLevel: "Grade",
-  quarter: "Quarter",
+  quarter: "Term",
   subject: "Subject",
   keyStage: "Key stage",
   shsStrand: "Strand",

@@ -139,10 +139,10 @@ function FilterRailBase({ filters, onChange, onReset, className }: Props) {
             onChange={(v) => onChange({ gradeLevel: v })}
           />
           <FilterSelect
-            label="Quarter"
+            label="Term"
             value={filters.quarter}
-            anyLabel="All quarters"
-            options={QUARTERS.map((q) => ({ value: q, label: q.replace("Quarter", "Q") }))}
+            anyLabel="All terms"
+            options={QUARTERS.map((q) => ({ value: q, label: q.replace("Term", "T") }))}
             onChange={(v) => onChange({ quarter: v })}
           />
         </div>

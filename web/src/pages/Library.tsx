@@ -128,7 +128,7 @@ export default function Library() {
             {collections.length === 0 ? (
               <EmptyState
                 title="No collections yet"
-                body="Group resources into collections for specific classes, quarters or intervention programs."
+                body="Group resources into collections for specific classes, terms or intervention programs."
               />
             ) : (
               collections.map((collection) => {

@@ -33,8 +33,17 @@ function asKind(value: string): FileKind {
 }
 
 function asQuarter(value: string): string {
-  const quarters: string[] = ["All Quarters", "Quarter 1", "Quarter 2", "Quarter 3", "Quarter 4"];
-  return quarters.includes(value) ? value : "All Quarters";
+  const terms: string[] = ["All Terms", "Term 1", "Term 2", "Term 3", "Term 4"];
+  if (terms.includes(value)) return value;
+  // Rows saved before "Quarter" was renamed to "Term" — normalize on read.
+  const legacy: Record<string, string> = {
+    "All Quarters": "All Terms",
+    "Quarter 1": "Term 1",
+    "Quarter 2": "Term 2",
+    "Quarter 3": "Term 3",
+    "Quarter 4": "Term 4",
+  };
+  return legacy[value] ?? "All Terms";
 }
 
 function asStatus(value: string): ResourceStatus {

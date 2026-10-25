@@ -575,7 +575,7 @@ export default function AdminUpload() {
                               onChange={(v) => patchStaged(item.key, { gradeLevel: v })}
                             />
                           </Field>
-                          <Field label="Quarter">
+                          <Field label="Term">
                             <Picker
                               value={item.quarter}
                               options={QUARTERS}
@@ -900,7 +900,7 @@ export default function AdminUpload() {
                   onChange={(v) => setBatch({ ...batch, gradeLevel: v })}
                 />
               </Field>
-              <Field label="Quarter">
+              <Field label="Term">
                 <Picker
                   value={batch.quarter}
                   options={QUARTERS}

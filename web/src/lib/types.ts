@@ -4,7 +4,7 @@ export type FileKind = "pdf" | "docx" | "pptx" | "epub" | "video" | "audio" | "i
 
 export type ResourceStatus = "published" | "pending" | "draft" | "archived";
 
-export type Quarter = "All Quarters" | "Quarter 1" | "Quarter 2" | "Quarter 3" | "Quarter 4";
+export type Quarter = "All Terms" | "Term 1" | "Term 2" | "Term 3" | "Term 4";
 
 /** A person credited as an author of a resource, with DepEd position and affiliation. */
 export interface ResourceAuthor {
