@@ -19,6 +19,7 @@ type ResourceRow = Database["public"]["Tables"]["resources"]["Row"];
 type ResourceInsert = Database["public"]["Tables"]["resources"]["Insert"];
 type FeedbackRow = Database["public"]["Tables"]["feedback"]["Row"];
 type DownloadEventRow = Database["public"]["Tables"]["download_events"]["Row"];
+type DownloadEventInsert = Database["public"]["Tables"]["download_events"]["Insert"];
 type BookmarkRow = Database["public"]["Tables"]["bookmarks"]["Row"];
 type CollectionRow = Database["public"]["Tables"]["collections"]["Row"];
 type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
@@ -204,6 +205,7 @@ export function rowToDownloadEvent(row: DownloadEventRow): DownloadEvent {
     at: row.at,
     subOffices: asStringArray(rawSubOffices).length > 0 ? asStringArray(rawSubOffices) : legacySubOffice ? [legacySubOffice] : [],
     schools: asStringArray(rawSchools).length > 0 ? asStringArray(rawSchools) : legacySchool ? [legacySchool] : [],
+    ipHash: typeof (row as Record<string, unknown>).ip_hash === "string" ? ((row as Record<string, unknown>).ip_hash as string) : null,
   };
 }
 
@@ -374,14 +376,93 @@ export async function insertCloudFeedback(feedback: Feedback): Promise<void> {
 
 export async function insertCloudDownloadEvent(event: DownloadEvent): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from("download_events").insert({
+  const row: Record<string, unknown> = {
     id: event.id,
     resource_id: event.resourceId,
     at: event.at,
     sub_offices: event.subOffices,
     schools: event.schools,
-  });
-  if (error) console.warn("LRMS cloud: insert download_event failed", error.message);
+  };
+  if (event.ipHash) row.ip_hash = event.ipHash;
+  const { error } = await supabase.from("download_events").insert(row as DownloadEventInsert);
+  if (!error) return;
+  // Databases without the ip_hash column yet — retry without it.
+  if (/ip_hash/i.test(error.message)) {
+    delete row.ip_hash;
+    const retry = await supabase.from("download_events").insert(row as DownloadEventInsert);
+    if (retry.error) console.warn("LRMS cloud: insert download_event failed", retry.error.message);
+    return;
+  }
+  console.warn("LRMS cloud: insert download_event failed", error.message);
+}
+
+/* ----------------- download deduplication (one count per IP) ---------------- */
+
+let cachedIpHash: string | undefined;
+const pendingDownloadKeys = new Set<string>();
+
+/** Deterministic hash (SHA-256 when available, djb2 fallback otherwise). */
+async function hashString(value: string): Promise<string> {
+  try {
+    if (typeof crypto !== "undefined" && crypto.subtle) {
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+      return Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+    }
+  } catch {
+    // Insecure context or unavailable SubtleCrypto — use the fallback below.
+  }
+  let hash = 5381;
+  for (let i = 0; i < value.length; i++) hash = ((hash << 5) + hash + value.charCodeAt(i)) | 0;
+  return `djb2-${(hash >>> 0).toString(16)}`;
+}
+
+/** Resolve and hash the visitor's public IP address. The raw IP is never
+ *  stored. If the lookup fails, fall back to per-device deduplication. */
+export async function getClientIpHash(): Promise<string> {
+  if (cachedIpHash) return cachedIpHash;
+  try {
+    const response = await fetch("https://api.ipify.org?format=json");
+    const data = (await response.json()) as { ip?: string };
+    if (!data.ip) throw new Error("no ip");
+    cachedIpHash = await hashString(`sdo-batangas-lrms:${data.ip}`);
+  } catch {
+    cachedIpHash = await hashString(`sdo-batangas-lrms:device:${getOrCreateVisitorId()}`);
+  }
+  return cachedIpHash;
+}
+
+/** True when this resource has already been counted for this IP. */
+async function hasDownloadFromIp(resourceId: string, ipHash: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { count, error } = await supabase
+    .from("download_events")
+    .select("id", { count: "exact", head: true })
+    .eq("resource_id", resourceId)
+    .eq("ip_hash", ipHash)
+    .limit(1);
+  // Missing ip_hash column (not migrated yet) — count every download.
+  if (error) return false;
+  return (count ?? 0) > 0;
+}
+
+/** Count a download in the cloud at most once per IP address. Returns true
+ *  when the download was counted (event inserted + counter incremented). */
+export async function recordCloudDownload(event: DownloadEvent): Promise<boolean> {
+  if (!supabase) return false;
+  const ipHash = event.ipHash;
+  const key = `${event.resourceId}:${ipHash ?? ""}`;
+  if (pendingDownloadKeys.has(key)) return false;
+  if (ipHash && (await hasDownloadFromIp(event.resourceId, ipHash))) return false;
+  pendingDownloadKeys.add(key);
+  try {
+    await insertCloudDownloadEvent(event);
+    await incrementCloudDownloads(event.resourceId);
+    return true;
+  } finally {
+    pendingDownloadKeys.delete(key);
+  }
 }
 
 export async function upsertCloudCollection(collection: Collection): Promise<void> {

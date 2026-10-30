@@ -21,13 +21,12 @@ import {
   fetchCloudResources,
   fetchCloudUsers,
   fetchCloudVisitorCount,
+  getClientIpHash,
   getOrCreateVisitorId,
   resetVisitorId,
   setVisitorId,
   heartbeatVisitor,
-  incrementCloudDownloads,
   incrementCloudViews,
-  insertCloudDownloadEvent,
   insertCloudFeedback,
   isSupabaseConfigured,
   markCloudNotificationRead,
@@ -38,6 +37,7 @@ import {
   rowToNotification,
   rowToPortalUser,
   rowToResource,
+  recordCloudDownload,
   seedCloudIfEmpty,
   subscribeToCloudChanges,
   subscribeToPresence,
@@ -284,7 +284,11 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
         });
       } else if (payload.table === "download_events" && payload.event === "INSERT" && payload.new) {
         const event = rowToDownloadEvent(payload.new as unknown as Database["public"]["Tables"]["download_events"]["Row"]);
-        setState((prev) => ({ ...prev, extraDownloads: [event, ...prev.extraDownloads] }));
+        setState((prev) =>
+          prev.extraDownloads.some((existing) => existing.id === event.id)
+            ? prev
+            : { ...prev, extraDownloads: [event, ...prev.extraDownloads] },
+        );
       } else if (payload.table === "collections" && payload.event !== "DELETE" && payload.new) {
         const collection = rowToCollection(payload.new as unknown as Database["public"]["Tables"]["collections"]["Row"]);
         setState((prev) => {
@@ -596,20 +600,36 @@ export function LrmsProvider({ children }: { children: ReactNode }) {
       const target = prev.resources.find((r) => r.id === id);
       if (!target) return prev;
       const at = new Date().toISOString();
-      const event: DownloadEvent = {
-        id: `${id}-live-${Date.now()}`,
-        resourceId: id,
-        at,
-        subOffices: target.subOffices,
-        schools: target.schools,
-      };
-      void incrementCloudDownloads(id);
-      void insertCloudDownloadEvent(event);
+      // Recent-activity history updates immediately; analytics are counted at
+      // most once per IP address (verified in the cloud before counting).
+      void (async () => {
+        const ipHash = await getClientIpHash();
+        const counted = await recordCloudDownload({
+          id: `${id}-live-${Date.now()}`,
+          resourceId: id,
+          at,
+          ipHash,
+          subOffices: target.subOffices,
+          schools: target.schools,
+        });
+        if (!counted) return;
+        const event: DownloadEvent = {
+          id: `${id}-live-${Date.now()}`,
+          resourceId: id,
+          at,
+          ipHash,
+          subOffices: target.subOffices,
+          schools: target.schools,
+        };
+        setState((latest) => ({
+          ...latest,
+          resources: latest.resources.map((r) => (r.id === id ? { ...r, downloads: r.downloads + 1 } : r)),
+          extraDownloads: [event, ...latest.extraDownloads],
+        }));
+      })();
       return {
         ...prev,
-        resources: prev.resources.map((r) => (r.id === id ? { ...r, downloads: r.downloads + 1 } : r)),
         history: [{ resourceId: id, at }, ...prev.history.filter((h) => h.resourceId !== id)].slice(0, 40),
-        extraDownloads: [event, ...prev.extraDownloads],
       };
     });
   }, []);

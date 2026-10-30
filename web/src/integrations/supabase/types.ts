@@ -78,6 +78,7 @@ export type Database = {
         Row: {
           at: string
           id: string
+          ip_hash: string | null
           resource_id: string
           school: string
           schools: string[] | null
@@ -87,6 +88,7 @@ export type Database = {
         Insert: {
           at?: string
           id: string
+          ip_hash?: string | null
           resource_id: string
           school?: string
           schools?: string[] | null
@@ -96,6 +98,7 @@ export type Database = {
         Update: {
           at?: string
           id?: string
+          ip_hash?: string | null
           resource_id?: string
           school?: string
           schools?: string[] | null

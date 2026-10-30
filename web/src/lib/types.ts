@@ -94,6 +94,9 @@ export interface DownloadEvent {
   at: string;
   subOffices: string[];
   schools: string[];
+  /** SHA-256 hash of the downloader's public IP — never the raw address.
+   *  Downloads are counted once per IP address. */
+  ipHash: string | null;
 }
 
 export interface Collection {
