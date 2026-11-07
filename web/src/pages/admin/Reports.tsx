@@ -24,8 +24,8 @@ type ReportKey =
 const REPORTS: { key: ReportKey; label: string; blurb: string }[] = [
   { key: "by-subject", label: "Total LR by learning area & subject", blurb: "Coverage of the repository per learning area." },
   { key: "by-grade", label: "LR by grade level", blurb: "Distribution across Kinder to Grade 12." },
-  { key: "by-district", label: "LR by district / sub-office", blurb: "Contribution per sub-office and district." },
-  { key: "by-school", label: "LR by school", blurb: "School-level contribution and utilization." },
+  { key: "by-district", label: "Published LR count per district / sub-office", blurb: "Number of published learning resources per sub-office." },
+  { key: "by-school", label: "Published LR count per school", blurb: "Number of published learning resources per school." },
   { key: "downloads-monthly", label: "Downloads per month", blurb: "Rolling 12-month download volume." },
   { key: "active-users", label: "Active users", blurb: "Registered accounts and last activity." },
   { key: "utilization", label: "Resource utilization", blurb: "Views, downloads and conversion per resource." },
@@ -76,20 +76,17 @@ export default function AdminReports() {
     }
 
     if (key === "by-district") {
-      const rows: (string | number)[][] = [];
-      SUB_OFFICE_NAMES.forEach((office) => {
+      const rows = SUB_OFFICE_NAMES.map((office) => {
         const items = published.filter((r) => r.subOffices.includes(office));
-        if (items.length === 0) return;
-        rows.push([
+        return [
           office,
-          items[0]?.subOffices[0] ?? office,
           items.length,
           items.reduce((sum, r) => sum + r.downloads, 0),
           downloadEvents.filter((e) => e.subOffices.includes(office)).length,
-        ]);
-      });
+        ];
+      }).sort((a, b) => (b[1] as number) - (a[1] as number));
       return {
-        title: "Learning Resources by Sub-Office",
+        title: "Published Learning Resources per Sub-Office",
         subtitle: stamp,
         columns: ["Sub-office", "Published LRs", "LR downloads", "Sub-office download events"],
         rows,
@@ -99,24 +96,25 @@ export default function AdminReports() {
     if (key === "by-school") {
       const schools = Array.from(new Set(published.flatMap((r) => r.schools)));
       return {
-        title: "Learning Resources by School",
+        title: "Published Learning Resources per School",
         subtitle: stamp,
-        columns: ["School", "Sub-office", "Published LRs", "Downloads", "Avg. rating"],
-        rows: schools.map((school) => {
-          const items = published.filter((r) => r.schools.includes(school));
-          const rated = items.filter((r) => ratings[r.id]);
-          const avg = rated.length
-            ? rated.reduce((sum, r) => sum + (ratings[r.id]?.average ?? 0), 0) / rated.length
-            : 0;
-          return [
-            school,
-            subOfficeFor(school),
-            items[0]?.subOffices[0] ?? "—",
-            items.length,
-            items.reduce((sum, r) => sum + r.downloads, 0),
-            avg ? avg.toFixed(2) : "—",
-          ];
-        }),
+        columns: ["School", "Sub-office", "Published LRs", "LR downloads", "Avg. rating"],
+        rows: schools
+          .map((school) => {
+            const items = published.filter((r) => r.schools.includes(school));
+            const rated = items.filter((r) => ratings[r.id]);
+            const avg = rated.length
+              ? rated.reduce((sum, r) => sum + (ratings[r.id]?.average ?? 0), 0) / rated.length
+              : 0;
+            return [
+              school,
+              subOfficeFor(school),
+              items.length,
+              items.reduce((sum, r) => sum + r.downloads, 0),
+              avg ? avg.toFixed(2) : "—",
+            ];
+          })
+          .sort((a, b) => (b[2] as number) - (a[2] as number)),
       };
     }
 
