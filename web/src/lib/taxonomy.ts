@@ -91,6 +91,7 @@ export const RESOURCE_TYPES: string[] = [
   "Kasaysayan",
   "Strategic Intervention Material (SIM)",
   "Storybook",
+  "Reading Materials",
 ];
 
 /** Week coverage options: single weeks plus every contiguous range (e.g. "Week 1-3"). */
