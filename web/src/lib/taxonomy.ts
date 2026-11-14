@@ -20,6 +20,7 @@ export const LEARNING_AREAS: string[] = [
   "TLE / EPP",
   "Reading & Literacy",
   "Makabansa",
+  "SNED",
 ];
 
 export const GRADE_LEVELS: string[] = [
@@ -36,6 +37,7 @@ export const GRADE_LEVELS: string[] = [
   "Grade 10",
   "Grade 11",
   "Grade 12",
+  "SNED",
 ];
 
 export const KEY_STAGES: string[] = [
