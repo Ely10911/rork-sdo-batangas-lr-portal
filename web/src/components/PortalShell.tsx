@@ -68,14 +68,15 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
-        <div className="container flex items-center gap-4 py-3">
-          <Link to="/" className="focus-ring flex items-center gap-3 rounded-sm">
+        <div className="container flex flex-wrap items-center gap-x-4 gap-y-2 py-2 sm:py-3">
+          <Link to="/" className="focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-sm sm:flex-none">
             <DivisionSeal />
-            <span className="leading-tight">
-              <span className="block font-display text-[17px] font-bold tracking-tight text-ink">
-                Learning Resource Portal
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate font-display text-[15px] font-bold tracking-tight text-ink sm:text-[17px]">
+                <span className="sm:hidden">LR Portal</span>
+                <span className="hidden sm:inline">Learning Resource Portal</span>
               </span>
-              <span className="block text-[11px] text-muted-foreground">{DIVISION}</span>
+              <span className="hidden truncate text-[11px] text-muted-foreground sm:block">{DIVISION}</span>
             </span>
           </Link>
 
@@ -106,7 +107,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
             <NotificationBell />
             {session?.registered ? (
               <>
