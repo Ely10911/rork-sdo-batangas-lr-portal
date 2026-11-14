@@ -170,7 +170,7 @@ export default function AdminAnalytics() {
         ))}
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="plate p-5">
           <Eyebrow className="text-gold-deep">Monthly usage</Eyebrow>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink">Downloads vs. cumulative resource growth</h2>

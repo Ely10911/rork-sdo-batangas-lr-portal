@@ -186,7 +186,7 @@ export default function ResourceDetail() {
         </div>
       </div>
 
-      <div className="container grid gap-8 py-8 lg:grid-cols-[1.6fr_1fr]">
+      <div className="container grid gap-8 py-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <FileKindTag kind={resource.fileKind} />
@@ -439,7 +439,7 @@ export default function ResourceDetail() {
         </div>
 
         {/* Sidebar */}
-        <aside className="space-y-5">
+        <aside className="min-w-0 space-y-5 overflow-hidden">
           <div className="plate overflow-hidden">
             <p className="eyebrow border-b border-border bg-muted/50 px-4 py-2.5 text-ink">
               Complete metadata record

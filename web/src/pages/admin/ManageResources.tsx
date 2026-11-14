@@ -688,7 +688,7 @@ function EditDialog({
               {extraAuthors.map((author, idx) => (
                 <div
                   key={idx}
-                  className="grid items-center gap-2 rounded-sm border border-border/60 bg-muted/30 p-2 md:grid-cols-[1.3fr_1.1fr_1.5fr_1.2fr_auto]"
+                  className="grid items-center gap-2 rounded-sm border border-border/60 bg-muted/30 p-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_auto]"
                 >
                   <Input
                     value={author.name}

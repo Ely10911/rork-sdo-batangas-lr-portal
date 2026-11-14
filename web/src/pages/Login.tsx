@@ -56,7 +56,7 @@ export default function Login() {
       <div className="pointer-events-none absolute -left-32 top-1/4 h-[420px] w-[420px] rounded-full bg-gold/10 blur-[110px]" />
       <div className="pointer-events-none absolute -right-24 bottom-0 h-[360px] w-[360px] rounded-full bg-gold-soft/15 blur-[100px]" />
 
-      <div className="relative grid w-full max-w-5xl gap-10 lg:grid-cols-[1fr_400px] lg:items-center">
+      <div className="relative grid w-full max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-center">
         <div className="animate-fade-rise">
           <div className="flex items-center gap-3">
             <span className="relative grid h-12 w-12 place-items-center rounded-full border border-gold/60 bg-gold-deep">

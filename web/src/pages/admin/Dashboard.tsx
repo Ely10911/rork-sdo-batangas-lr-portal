@@ -238,7 +238,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
+      <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="plate p-5">
           <div className="mb-4 flex items-end justify-between">
             <div>
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1fr]">
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="plate p-5">
           <Eyebrow className="text-gold-deep">Coverage</Eyebrow>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink">Published LRs by learning area</h2>

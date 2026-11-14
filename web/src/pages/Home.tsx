@@ -247,7 +247,7 @@ export default function Home() {
       </section>
 
       {/* Trending + newest */}
-      <section className="container grid gap-8 pb-16 lg:grid-cols-[1.55fr_1fr]">
+      <section className="container grid gap-8 pb-16 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <div>
           <SectionHeading
             eyebrow="Download analytics"
